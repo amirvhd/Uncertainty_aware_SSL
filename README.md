@@ -26,7 +26,7 @@ pip install -r requirements.txt
 ### Pretraining
 
 ```python
-python main_pretrain.py
+python main_pretrain.py --cosine
 ``` 
 ### Linear evaluation
 
