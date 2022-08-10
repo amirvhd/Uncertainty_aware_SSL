@@ -1,7 +1,7 @@
 import torch
 import argparse
 from torchvision.models import resnet50
-from laplace import Laplace
+#from laplace import Laplace
 from netcal.metrics import ECE
 import torch.distributions as dists
 from models.resnet_big import SupConResNet, LinearClassifier
@@ -50,8 +50,8 @@ def ensemble(n, dataset, targets, n_cls, test_loader, semi=False, semi_percent=1
         print(f'[ensemble] Acc.: {acc_ensemble2:.1%}; ECE: {ece_ensemble2:.1%}; NLL: {nll_ensemble2:.3}')
     else:
         for i in range(n):
-            linear_model_path = './saved_models/{}_models_UAloss/simclr800_linear_{}_epoch100.pt'.format(dataset, i)
-            simclr_path = './saved_models/{}_models_UAloss/simclr800_encoder_{}_epoch100.pt'.format(dataset, i)
+            linear_model_path = './saved_models/{}_models_UAloss/simclr800_linear_{}_epoch100_5heads.pt'.format(dataset, i)
+            simclr_path = './saved_models/{}_models_UAloss/simclr800_encoder_{}_epoch100_5heads.pt'.format(dataset, i)
             model, classifier, criterion = set_model_linear("resnet50", n_cls, simclr_path)
             classifier.load_state_dict(torch.load(linear_model_path))
             linear_model = MyEnsemble(model.encoder, classifier).cuda().eval()

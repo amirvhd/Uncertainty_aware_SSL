@@ -36,7 +36,7 @@ def generate_dataloader(data, name, transform=None):
     return dataloader
 
 
-def data_loader(dataset="cifar10", semi=False, semi_percent=10, size=32, data_dir='../../DATA/', split=False):
+def data_loader(dataset="cifar10", semi=False, semi_percent=10):
     if dataset == 'cifar10':
         mean = (0.4914, 0.4822, 0.4465)
         std = (0.2023, 0.1994, 0.2010)
@@ -51,7 +51,7 @@ def data_loader(dataset="cifar10", semi=False, semi_percent=10, size=32, data_di
         std = (0.229, 0.224, 0.225)
     normalize = transforms.Normalize(mean=mean, std=std)
     train_transform = transforms.Compose([
-        transforms.RandomResizedCrop(size=size, scale=(0.2, 1.)),
+        transforms.RandomResizedCrop(size=32, scale=(0.2, 1.)),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         normalize,
@@ -63,18 +63,18 @@ def data_loader(dataset="cifar10", semi=False, semi_percent=10, size=32, data_di
     ])
     # datasets
     if dataset == "cifar10":
-        train_dataset = datasets.CIFAR10(root=data_dir, train=True, download=True, transform=train_transform)
-        test_dataset = datasets.CIFAR10(root=data_dir, train=False, download=True, transform=val_transform)
+        train_dataset = datasets.CIFAR10(root='../../DATA/', train=True, download=True, transform=train_transform)
+        test_dataset = datasets.CIFAR10(root='../../DATA/', train=False, download=True, transform=val_transform)
 
     elif dataset == "cifar100":
-        train_dataset = datasets.CIFAR100(root=data_dir, train=True, download=True, transform=train_transform)
-        test_dataset = datasets.CIFAR100(root=data_dir, train=False, download=True, transform=val_transform)
+        train_dataset = datasets.CIFAR100(root='../../DATA/', train=True, download=True, transform=train_transform)
+        test_dataset = datasets.CIFAR100(root='../../DATA/', train=False, download=True, transform=val_transform)
     elif dataset == "svhn":
         train_dataset = datasets.SVHN(
-            root=data_dir, split="train", download=True, transform=train_transform
+            root='.../../DATA/', split="train", download=True, transform=train_transform
         )
         test_dataset = datasets.SVHN(
-            root=data_dir, split="test", download=True, transform=val_transform
+            root='../../DATA/', split="test", download=True, transform=val_transform
         )
     elif dataset == "isic":
         train_img_path, train_class_path, val_img_path, val_class_path, test_img = set_path()
@@ -91,20 +91,20 @@ def data_loader(dataset="cifar10", semi=False, semi_percent=10, size=32, data_di
         train, _ = random_split(train_dataset, [x, y])
     else:
         train = train_dataset
-    if split:
-        train, val = random_split(train, [int(0.8 * len(train)),
-                                          len(train) - int(0.8 * len(train))])
-        val_loader = DataLoader(val,
-                                batch_size=512,
-                                shuffle=True,
-                                num_workers=16,
-                                drop_last=False)
+
+    train, val = random_split(train, [int(0.8 * len(train)),
+                                      len(train) - int(0.8 * len(train))])
 
     train_loader = DataLoader(train,
                               batch_size=512,
                               shuffle=True,
                               num_workers=16,
                               drop_last=False)
+    val_loader = DataLoader(val,
+                            batch_size=512,
+                            shuffle=True,
+                            num_workers=16,
+                            drop_last=False)
 
     test_loader = DataLoader(test_dataset,
                              batch_size=512,

@@ -1,15 +1,13 @@
 import logging
 import os.path as osp
-from time import time
 from models.resnet_big import SupConResNet, LinearClassifier
-import matplotlib.pyplot as plt
 import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
-from score_utils import calc_metrics_transformed
+from utils.score_utils import calc_metrics_transformed
 from models.concatenate import MyEnsemble
-from laplace import Laplace
+#from laplace import Laplace
 from Dataloader.dataloader import data_loader
 
 logger = logging.getLogger(__name__)
