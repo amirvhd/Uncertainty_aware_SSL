@@ -5,7 +5,7 @@ import time
 import math
 import torch
 
-from Dataloader.dataloader import set_loader
+from Dataloader.dataloader import set_loader, data_loader
 from utils.util import adjust_learning_rate
 from utils.util import set_optimizer
 
@@ -78,7 +78,7 @@ def parse_option():
     opt = parser.parse_args()
 
     # set the path according to the environment
-    opt.data_folder = '../../DATA/'
+    opt.data_folder = '../../DATA2/'
 
     iterations = opt.lr_decay_epochs.split(',')
     opt.lr_decay_epochs = list([])
@@ -118,7 +118,8 @@ def main():
     writer = SummaryWriter(log_dir=opt.tb_path)
 
     # build data loader
-    train_loader, val_loader = set_loader(dataset=opt.dataset, batch_size=opt.batch_size, num_workers=opt.num_workers)
+    train_loader, val_loader, test_loader, _ = data_loader(dataset=opt.dataset, batch_size=opt.batch_size)
+    #train_loader, val_loader = set_loader(dataset=opt.dataset, batch_size=opt.batch_size, num_workers=opt.num_workers)
     ensemble = opt.ensemble
     for i in range(ensemble):
         torch.manual_seed(i)
@@ -154,7 +155,7 @@ def main():
 
             if val_acc > best_acc:
                 best_acc = val_acc
-        evaluate(val_loader, model, classifier, opt)
+        evaluate(test_loader, model, classifier, opt)
         print('best accuracy: {:.2f}'.format(best_acc))
         writer.flush()
         writer.close()
