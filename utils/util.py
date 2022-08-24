@@ -4,7 +4,9 @@ import math
 import numpy as np
 import torch
 import torch.optim as optim
-#from torchlars import LARS
+
+
+# from torchlars import LARS
 
 
 class TwoCropTransform:
@@ -80,9 +82,9 @@ def warmup_learning_rate(args, epoch, batch_id, total_batches, optimizer):
 
 def set_optimizer(opt, model):
     optimizer = optim.SGD(model.parameters(),
-                               lr=opt.learning_rate,
-                               momentum=opt.momentum,
-                               weight_decay=opt.weight_decay)
+                          lr=opt.learning_rate,
+                          momentum=opt.momentum,
+                          weight_decay=opt.weight_decay)
     return optimizer
 
 

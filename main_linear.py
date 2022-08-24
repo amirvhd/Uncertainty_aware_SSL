@@ -81,6 +81,8 @@ def parse_option():
                         help='number of ensemble models')
     parser.add_argument('--nh', type=int, default=1,
                         help='number of heads')
+    parser.add_argument('--lamda', type=int, default=1,
+                        help='number of heads')
     opt = parser.parse_args()
 
     # set the path according to the environment
@@ -131,8 +133,8 @@ def main():
         torch.manual_seed(i)
         torch.cuda.manual_seed(i)
         opt.ckpt = (
-            './saved_models/{}_models_UAloss/simclr_{}_{}_epoch800_{}heads.pt'.format(opt.dataset, opt.dataset, i,
-                                                                                      opt.nh))
+            './saved_models/{}_models_UAloss/simclr_{}_{}_epoch800_{}heads_{}.pt'.format(opt.dataset, opt.dataset, i,
+                                                                                      opt.nh, opt.lamda))
         # build model and criterion
         model, classifier, criterion = set_model_linear(model_name=opt.model, number_cls=opt.n_cls, path=opt.ckpt)
         # tensorboard
@@ -184,13 +186,17 @@ def main():
                                                                                                 opt.semi_percent))
         else:
             torch.save(best_classifier.state_dict(),
-                       './saved_models/{}_models_UAloss/simclr800_linear_{}_epoch{}_{}heads_ex1.pt'.format(opt.dataset, i,
-                                                                                                       opt.epochs,
-                                                                                                       opt.nh))
+                       './saved_models/{}_models_UAloss/simclr800_linear_{}_epoch{}_{}heads_{}.pt'.format(opt.dataset,
+                                                                                                          i,
+                                                                                                          opt.epochs,
+                                                                                                          opt.nh,
+                                                                                                          opt.lamda))
             torch.save(model.state_dict(),
-                       './saved_models/{}_models_UAloss/simclr800_encoder_{}_epoch{}_{}heads_ex1.pt'.format(opt.dataset, i,
-                                                                                                        opt.epochs,
-                                                                                                        opt.nh))
+                       './saved_models/{}_models_UAloss/simclr800_encoder_{}_epoch{}_{}heads_{}.pt'.format(opt.dataset,
+                                                                                                           i,
+                                                                                                           opt.epochs,
+                                                                                                           opt.nh,
+                                                                                                           opt.lamda))
 
 
 if __name__ == '__main__':

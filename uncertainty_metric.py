@@ -49,10 +49,10 @@ def ensemble(n, nh, dataset, targets, n_cls, test_loader, semi=False, semi_perce
         print(f'[ensemble] Acc.: {acc_ensemble2:.1%}; ECE: {ece_ensemble2:.1%}; NLL: {nll_ensemble2:.3}')
     else:
         for i in range(n):
-            linear_model_path = './saved_models/{}_models_MAloss/simclr800_linear_{}_epoch100_{}heads.pt'.format(
+            linear_model_path = './saved_models/{}_models_UAloss/simclr800_linear_{}_epoch100_{}heads.pt'.format(
                 dataset,
                 i, nh)
-            simclr_path = './saved_models/{}_models_MAloss/simclr800_encoder_{}_epoch100_{}heads.pt'.format(dataset, i,
+            simclr_path = './saved_models/{}_models_UAloss/simclr800_encoder_{}_epoch100_{}heads.pt'.format(dataset, i,
                                                                                                             nh)
             model, classifier, criterion = set_model_linear("resnet50", n_cls, simclr_path)
             classifier.load_state_dict(torch.load(linear_model_path))

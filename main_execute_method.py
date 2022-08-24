@@ -80,9 +80,9 @@ def run_experiment():
         else:
             LA = False
 
-        linear_model_path = "./saved_models/{}_models_MAloss/simclr800_linear_{}_epoch100_{}heads.pt".format(
+        linear_model_path = "./saved_models/{}_models_UAloss/simclr800_linear_{}_epoch100_{}heads.pt".format(
             opt.dataset, i, opt.nh)
-        simclr_path = "./saved_models/{}_models_MAloss/simclr800_encoder_{}_epoch100_{}heads.pt".format(opt.dataset, i,
+        simclr_path = "./saved_models/{}_models_UAloss/simclr800_encoder_{}_epoch100_{}heads.pt".format(opt.dataset, i,
                                                                                                         opt.nh)
         lit_model_h = LitBaseline(opt.dataset, linear_model_path, simclr_path, n_cls, out_dir, LA)
         baseline_df = baseline_df.append(execute_baseline(opt, lit_model_h, trainer, loaders_dict))

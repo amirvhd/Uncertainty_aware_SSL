@@ -67,6 +67,8 @@ def parse_option():
                         help='temperature for loss function')
     parser.add_argument('--nh', type=int, default=1,
                         help='number of heads')
+    parser.add_argument('--lamda', type=int, default=1,
+                        help='number of heads')
     # other setting
     parser.add_argument('--cosine', action='store_true',
                         help='using cosine annealing')
@@ -120,7 +122,8 @@ def main():
     for i in range(ensemble):
         torch.manual_seed(i)
         torch.cuda.manual_seed(i)
-        model, criterion = set_model(model_name=opt.model, temperature=opt.temp, syncBN=opt.syncBN)
+        model, criterion = set_model(model_name=opt.model, temperature=opt.temp, syncBN=opt.syncBN, lamda=opt.lamda,
+                                     batch_size=opt.batch_size, nh=opt.nh)
 
         # build optimizer
         optimizer = set_optimizer(opt, model)
@@ -147,7 +150,7 @@ def main():
         print('ensemble {}, total time {:.2f}'.format(i, time2 - time1))
 
         save_file = os.path.join(
-            opt.model_path, 'simclr_{}_{}_epoch{}_{}heads.pt'.format(opt.dataset, i, opt.epochs, opt.nh))
+            opt.model_path, 'simclr_{}_{}_epoch{}_{}heads_{}.pt'.format(opt.dataset, i, opt.epochs, opt.nh, opt.lamda))
         torch.save(model.state_dict(), save_file)
 
 

@@ -57,9 +57,10 @@ def train(train_loader, model, criterion, optimizer, epoch, opt):
     return losses.avg
 
 
-def set_model(model_name, temperature, syncBN = False):
-    model = SupConResNet(name=model_name)
-    criterion = SupConLoss(temperature=temperature)
+def set_model(model_name, temperature, syncBN=False, lamda=1,
+              batch_size=512, nh=5):
+    model = SupConResNet(name=model_name, n_heads=nh)
+    criterion = SupConLoss(temperature=temperature, lamda=lamda, batch_size=batch_size)
 
     # enable synchronized Batch Normalization
 
@@ -68,7 +69,7 @@ def set_model(model_name, temperature, syncBN = False):
         if syncBN:
             model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
         if torch.cuda.device_count() > 1:
-            model.encoder = torch.nn.DataParallel(model.encoder)
+            model = torch.nn.DataParallel(model)
         criterion = criterion.cuda()
         cudnn.benchmark = True
 
