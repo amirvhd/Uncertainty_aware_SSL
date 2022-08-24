@@ -4,13 +4,13 @@ import argparse
 import time
 import math
 import torch
+import copy
 
-from Dataloader.dataloader import set_loader
+from Dataloader.dataloader import set_loader, data_loader
 from utils.util import adjust_learning_rate
 from utils.util import set_optimizer
 
-
-#from laplace import Laplace
+# from laplace import Laplace
 from Train.linear_eval import set_model_linear, train, evaluate, predict, validate
 # import tensorboard_logger as tb_logger
 from torch.utils.tensorboard import SummaryWriter
@@ -28,6 +28,8 @@ ssh -N -f -L localhost:16006:localhost:6006 ra49bid2@datalab2.srv.lrz.de
 on browser:
 http://localhost:16006
 """
+
+
 def parse_option():
     parser = argparse.ArgumentParser('argument for training')
 
@@ -53,6 +55,8 @@ def parse_option():
                         help='weight decay')
     parser.add_argument('--momentum', type=float, default=0.9,
                         help='momentum')
+    parser.add_argument('--patience', type=int, default=10,
+                        help='number of heads')
 
     # model dataset
     parser.add_argument('--model', type=str, default='resnet50')
@@ -75,10 +79,12 @@ def parse_option():
                         help='percentage of data usage in semi-supervised')
     parser.add_argument('--ensemble', type=int, default=1,
                         help='number of ensemble models')
+    parser.add_argument('--nh', type=int, default=1,
+                        help='number of heads')
     opt = parser.parse_args()
 
     # set the path according to the environment
-    opt.data_folder = '../../DATA/'
+    opt.data_folder = '../../DATA2/'
 
     iterations = opt.lr_decay_epochs.split(',')
     opt.lr_decay_epochs = list([])
@@ -116,15 +122,17 @@ def main():
     best_acc = 0
     opt = parse_option()
     writer = SummaryWriter(log_dir=opt.tb_path)
-
+    best_epoch = 0
     # build data loader
-    train_loader, val_loader = set_loader(dataset=opt.dataset, batch_size=opt.batch_size, num_workers=opt.num_workers)
+    train_loader, val_loader, test_loader, _ = data_loader(dataset=opt.dataset, batch_size=opt.batch_size)
+    # train_loader, val_loader = set_loader(dataset=opt.dataset, batch_size=opt.batch_size, num_workers=opt.num_workers)
     ensemble = opt.ensemble
     for i in range(ensemble):
         torch.manual_seed(i)
         torch.cuda.manual_seed(i)
         opt.ckpt = (
-            './saved_models/{}_models_UAloss/simclr_{}_{}_epoch800_5heads.pt'.format(opt.dataset, opt.dataset, i))
+            './saved_models/{}_models_UAloss/simclr_{}_{}_epoch800_{}heads.pt'.format(opt.dataset, opt.dataset, i,
+                                                                                      opt.nh))
         # build model and criterion
         model, classifier, criterion = set_model_linear(model_name=opt.model, number_cls=opt.n_cls, path=opt.ckpt)
         # tensorboard
@@ -133,6 +141,7 @@ def main():
         optimizer = set_optimizer(opt, classifier)
         print('ensemble number is {}:'.format(i))
         # training routine
+        best_classifier = None
         for epoch in range(1, opt.epochs + 1):
             adjust_learning_rate(opt, optimizer, epoch)
 
@@ -153,15 +162,19 @@ def main():
             writer.add_scalar("Loss/eval", val_loss, epoch)
 
             if val_acc > best_acc:
+                #   best_epoch = epoch
                 best_acc = val_acc
-        evaluate(val_loader, model, classifier, opt)
+                best_classifier = copy.deepcopy(classifier)
+            # if epoch - best_epoch > opt.patience:
+            #  break
+        evaluate(test_loader, model, best_classifier, opt)
         print('best accuracy: {:.2f}'.format(best_acc))
         writer.flush()
         writer.close()
         # save the last model
         if opt.semi:
 
-            torch.save(classifier.state_dict(),
+            torch.save(best_classifier.state_dict(),
                        './saved_models/{}_models/simclr_linear_{}_epoch{}_percent{}.pt'.format(opt.dataset, i,
                                                                                                opt.epochs,
                                                                                                opt.semi_percent))
@@ -170,12 +183,14 @@ def main():
                                                                                                 opt.epochs,
                                                                                                 opt.semi_percent))
         else:
-            torch.save(classifier.state_dict(),
-                       './saved_models/{}_models_UAloss/simclr800_linear_{}_epoch{}_5heads.pt'.format(opt.dataset, i,
-                                                                                                      opt.epochs))
+            torch.save(best_classifier.state_dict(),
+                       './saved_models/{}_models_UAloss/simclr800_linear_{}_epoch{}_{}heads_ex1.pt'.format(opt.dataset, i,
+                                                                                                       opt.epochs,
+                                                                                                       opt.nh))
             torch.save(model.state_dict(),
-                       './saved_models/{}_models_UAloss/simclr800_encoder_{}_epoch{}_5heads.pt'.format(opt.dataset, i,
-                                                                                                       opt.epochs))
+                       './saved_models/{}_models_UAloss/simclr800_encoder_{}_epoch{}_{}heads_ex1.pt'.format(opt.dataset, i,
+                                                                                                        opt.epochs,
+                                                                                                        opt.nh))
 
 
 if __name__ == '__main__':

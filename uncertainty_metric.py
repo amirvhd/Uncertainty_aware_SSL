@@ -1,14 +1,14 @@
 import torch
 import argparse
 from torchvision.models import resnet50
-#from laplace import Laplace
+from laplace import Laplace
 from netcal.metrics import ECE
 import torch.distributions as dists
-from models.resnet_big import SupConResNet, LinearClassifier
 from models.concatenate import MyEnsemble
 import numpy as np
 from Dataloader.dataloader import data_loader
 from Train.linear_eval import set_model_linear, predict
+from utils.metrics import OELoss, SCELoss, TACELoss, ACELoss
 
 
 def parse_option():
@@ -21,14 +21,13 @@ def parse_option():
                         help='semi-supervised')
     parser.add_argument('--semi_percent', type=int, default=10,
                         help='percentage of data usage in semi-supervised')
+    parser.add_argument('--nh', type=int, default=1,
+                        help='number of heads')
     opt = parser.parse_args()
     return opt
 
 
-
-
-
-def ensemble(n, dataset, targets, n_cls, test_loader, semi=False, semi_percent=1,
+def ensemble(n, nh, dataset, targets, n_cls, test_loader, semi=False, semi_percent=1,
              path='./saved_models/{}_models_UAloss/simclr800_linear_{}_epoch100.pt'):
     probs_ensemble2_model = []
     if semi == True:
@@ -50,8 +49,11 @@ def ensemble(n, dataset, targets, n_cls, test_loader, semi=False, semi_percent=1
         print(f'[ensemble] Acc.: {acc_ensemble2:.1%}; ECE: {ece_ensemble2:.1%}; NLL: {nll_ensemble2:.3}')
     else:
         for i in range(n):
-            linear_model_path = './saved_models/{}_models_UAloss/simclr800_linear_{}_epoch100_5heads.pt'.format(dataset, i)
-            simclr_path = './saved_models/{}_models_UAloss/simclr800_encoder_{}_epoch100_5heads.pt'.format(dataset, i)
+            linear_model_path = './saved_models/{}_models_MAloss/simclr800_linear_{}_epoch100_{}heads.pt'.format(
+                dataset,
+                i, nh)
+            simclr_path = './saved_models/{}_models_MAloss/simclr800_encoder_{}_epoch100_{}heads.pt'.format(dataset, i,
+                                                                                                            nh)
             model, classifier, criterion = set_model_linear("resnet50", n_cls, simclr_path)
             classifier.load_state_dict(torch.load(linear_model_path))
             linear_model = MyEnsemble(model.encoder, classifier).cuda().eval()
@@ -59,10 +61,20 @@ def ensemble(n, dataset, targets, n_cls, test_loader, semi=False, semi_percent=1
         probs_ensemble2_model = np.array(probs_ensemble2_model)
         probs_ensemble2 = np.mean(probs_ensemble2_model, 0)
         acc_ensemble2 = (probs_ensemble2.argmax(-1) == targets).mean()
+        oe = OELoss()
+        sce = SCELoss()
+        ace = ACELoss()
+        tace = TACELoss()
+        oe_res = oe.loss(output=probs_ensemble2, labels=targets, logits=False)
+        sce_res = sce.loss(output=probs_ensemble2, labels=targets, logits=False)
+        ace_res = ace.loss(output=probs_ensemble2, labels=targets, logits=False)
+        tace_res = tace.loss(output=probs_ensemble2, labels=targets, logits=False)
         ece_ensemble2 = ECE(bins=15).measure(probs_ensemble2, targets)
         nll_ensemble2 = -dists.Categorical(torch.tensor(probs_ensemble2)).log_prob(torch.tensor(targets)).mean()
         print("number of ensemble is {}".format(n))
-        print(f'[ensemble] Acc.: {acc_ensemble2:.1%}; ECE: {ece_ensemble2:.1%}; NLL: {nll_ensemble2:.3}')
+        print(
+            f'[ensemble] Acc.: {acc_ensemble2:.1%}; ECE: {ece_ensemble2:.1%}; NLL: {nll_ensemble2:.3}; '
+            f'OE: {oe_res:.3}; SCE: {sce_res:.3}; ACE: {ace_res:.3}; TACE: {tace_res:.3}')
 
 
 def ensemble_laplace(n, dataset, targets, n_cls, test_loader, train_loader, val_loader, semi, semi_percent):
@@ -125,7 +137,8 @@ def train():
         smi = True
     else:
         smi = False
-    train_loader, val_loader, test_loader, targets = data_loader(opt.dataset, smi, opt.semi_percent)
+    train_loader, val_loader, test_loader, targets = data_loader(opt.dataset, batch_size=512, semi=smi,
+                                                                 semi_percent=opt.semi_percent)
     # MAP calculation for random seed = 1
     # la.optimize_prior_precision(method='CV', val_loader=val_loader, link_approx="mc", n_samples=200, pred_type="glm")
     # la.optimize_prior_precision(method='marglik', link_approx="mc", n_samples=200)
@@ -133,7 +146,7 @@ def train():
     # la.optimize_prior_precision(pred_type="nn", method='CV', val_loader=val_loader, link_approx="mc", n_samples=1000)
     # MAP result for first case
 
-    ensemble(1, opt.dataset, targets, n_cls, test_loader, smi, opt.semi_percent, opt.model_path)
+    ensemble(1, opt.nh, opt.dataset, targets, n_cls, test_loader, smi, opt.semi_percent, opt.model_path)
 
     # Laplace result for first case
 

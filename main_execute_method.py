@@ -14,7 +14,7 @@ def parse_option():
     parser = argparse.ArgumentParser('argument for training')
     parser.add_argument('--dataset', type=str, default='cifar10',
                         choices=['cifar10', 'cifar100', 'svhn', 'isic'], help='dataset')
-    parser.add_argument('--data_dir', type=str, default='../../DATA/',
+    parser.add_argument('--data_dir', type=str, default='../../DATA2/',
                         help='path to dataset')
     parser.add_argument('--batch_size', type=int, default=512,
                         help='batch_size')
@@ -28,12 +28,13 @@ def parse_option():
                         help='random seed')
     parser.add_argument('--ensemble', type=int, default=1,
                         help='number of ensemble models')
+    parser.add_argument('--nh', type=int, default=5,
+                        help='number of heads')
     opt = parser.parse_args()
     return opt
 
 
 def run_experiment():
-
     t0 = time.time()
     opt = parse_option()
     # out_dir = os.getcwd()
@@ -79,8 +80,10 @@ def run_experiment():
         else:
             LA = False
 
-        linear_model_path = "./saved_models/{}_models_UAloss/simclr800_linear_{}_epoch100_5heads.pt".format(opt.dataset, i)
-        simclr_path = "./saved_models/{}_models_UAloss/simclr800_encoder_{}_epoch100_5heads.pt".format(opt.dataset, i)
+        linear_model_path = "./saved_models/{}_models_MAloss/simclr800_linear_{}_epoch100_{}heads.pt".format(
+            opt.dataset, i, opt.nh)
+        simclr_path = "./saved_models/{}_models_MAloss/simclr800_encoder_{}_epoch100_{}heads.pt".format(opt.dataset, i,
+                                                                                                        opt.nh)
         lit_model_h = LitBaseline(opt.dataset, linear_model_path, simclr_path, n_cls, out_dir, LA)
         baseline_df = baseline_df.append(execute_baseline(opt, lit_model_h, trainer, loaders_dict))
     ens = baseline_df.groupby(['ood_name']).mean()

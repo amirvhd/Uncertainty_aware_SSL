@@ -65,7 +65,8 @@ def parse_option():
     # temperature
     parser.add_argument('--temp', type=float, default=0.5,
                         help='temperature for loss function')
-
+    parser.add_argument('--nh', type=int, default=1,
+                        help='number of heads')
     # other setting
     parser.add_argument('--cosine', action='store_true',
                         help='using cosine annealing')
@@ -86,9 +87,9 @@ def parse_option():
 
     # set the path according to the environment
     if opt.data_folder is None:
-        opt.data_folder = '../../DATA/'
+        opt.data_folder = '../../DATA2/'
     opt.model_path = './saved_models/{}_models_UAloss'.format(opt.dataset)
-    opt.tb_path = '../../DATA/loggings_{}_models_UAloss'.format(opt.dataset)
+    opt.tb_path = '../../DATA2/loggings_{}_models_UAloss_{}'.format(opt.dataset, opt.nh)
     opt.save_folder = opt.model_path
     if not os.path.isdir(opt.save_folder):
         os.makedirs(opt.save_folder)
@@ -141,12 +142,12 @@ def main():
             # tensorboard logger
             logger.log_value('loss', loss, epoch)
             logger.log_value('learning_rate', optimizer.param_groups[0]['lr'], epoch)
-            #logger.log_value('std', std_loss, epoch)
+            # logger.log_value('std', std_loss, epoch)
         time2 = time.time()
         print('ensemble {}, total time {:.2f}'.format(i, time2 - time1))
 
         save_file = os.path.join(
-            opt.model_path, 'simclr_{}_{}_epoch{}_5heads.pt'.format(opt.dataset, i, opt.epochs))
+            opt.model_path, 'simclr_{}_{}_epoch{}_{}heads.pt'.format(opt.dataset, i, opt.epochs, opt.nh))
         torch.save(model.state_dict(), save_file)
 
 
