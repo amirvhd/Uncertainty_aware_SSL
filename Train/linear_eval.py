@@ -9,8 +9,16 @@ from torch import nn
 from sklearn.metrics import classification_report
 
 
-def set_model_linear(model_name, number_cls, path):
-    model = SupConResNet(name=model_name)
+class MyDataParallel(torch.nn.DataParallel):
+    def __getattr__(self, name):
+        try:
+            return super().__getattr__(name)
+        except AttributeError:
+            return getattr(self.module, name)
+
+
+def set_model_linear(model_name, number_cls, path, nh=5):
+    model = SupConResNet(name=model_name, n_heads=nh)
     criterion = torch.nn.CrossEntropyLoss()
 
     classifier = LinearClassifier(name=model_name, num_classes=number_cls)
@@ -20,7 +28,7 @@ def set_model_linear(model_name, number_cls, path):
 
     if torch.cuda.is_available():
         if torch.cuda.device_count() > 1:
-            model.encoder = torch.nn.DataParallel(model.encoder)
+            model = MyDataParallel(model)
         else:
             new_state_dict = {}
             for k, v in state_dict.items():

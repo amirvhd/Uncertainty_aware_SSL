@@ -92,7 +92,7 @@ def parse_option():
     opt.lr_decay_epochs = list([])
     for it in iterations:
         opt.lr_decay_epochs.append(int(it))
-    opt.tb_path = '../../DATA/loggings_{}_models_UAloss/linear_evaluation/exp1'.format(opt.dataset)
+    opt.tb_path = '../../DATA/loggings_{}_models_UAloss/linear_evaluation/'.format(opt.dataset)
 
     # warm-up for large-batch training,
     if opt.warm:
@@ -134,9 +134,10 @@ def main():
         torch.cuda.manual_seed(i)
         opt.ckpt = (
             './saved_models/{}_models_UAloss/simclr_{}_{}_epoch800_{}heads_{}.pt'.format(opt.dataset, opt.dataset, i,
-                                                                                      opt.nh, opt.lamda))
+                                                                                         opt.nh, opt.lamda))
         # build model and criterion
-        model, classifier, criterion = set_model_linear(model_name=opt.model, number_cls=opt.n_cls, path=opt.ckpt)
+        model, classifier, criterion = set_model_linear(model_name=opt.model, number_cls=opt.n_cls, path=opt.ckpt,
+                                                        nh=opt.nh)
         # tensorboard
         # logger = tb_logger.Logger(logdir=opt.tb_path, flush_secs=2)
         # build optimizer
@@ -167,10 +168,11 @@ def main():
                 #   best_epoch = epoch
                 best_acc = val_acc
                 best_classifier = copy.deepcopy(classifier)
+                print('best accuracy: {:.2f}'.format(best_acc))
             # if epoch - best_epoch > opt.patience:
             #  break
         evaluate(test_loader, model, best_classifier, opt)
-        print('best accuracy: {:.2f}'.format(best_acc))
+
         writer.flush()
         writer.close()
         # save the last model

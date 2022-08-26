@@ -277,7 +277,7 @@ def get_data_loaders(
 
 def get_cifar10_loaders(
         data_transform,
-        data_dir: str = "../../DATA/",
+        data_dir: str = "../../DATA2/",
         batch_size: int = 128,
         num_workers: int = 4,
 ):
@@ -321,7 +321,7 @@ def get_cifar10_loaders(
 
 def get_cifar100_loaders(
         data_transform,
-        data_dir: str = "./data",
+        data_dir: str = "../../DATA2/",
         batch_size: int = 128,
         num_workers: int = 4,
 ):
@@ -362,7 +362,7 @@ def get_cifar100_loaders(
 
 def get_svhn_loaders(
         data_transform,
-        data_dir: str = "./data",
+        data_dir: str = "../../DATA2/",
         batch_size: int = 128,
         num_workers: int = 4,
 ):
@@ -399,7 +399,7 @@ def get_svhn_loaders(
 
 def get_isic_loaders(
         data_transform,
-        data_dir: str = "./data",
+        data_dir: str = "../../DATA2/",
         batch_size: int = 128,
         num_workers: int = 4,
 ):

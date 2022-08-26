@@ -21,7 +21,6 @@ class SupConLoss(nn.Module):
         self.base_temperature = base_temperature
         self.lamda = lamda
         self.batch_size =batch_size
-        self.std_loss = 0
 
     def forward(self, features, features_std, epochs):
         """Compute loss for model. If both `labels` and `mask` are None,
@@ -84,11 +83,12 @@ class SupConLoss(nn.Module):
         # loss
         loss = - (self.temperature / self.base_temperature) * mean_log_prob_pos
         # uncertainty loss
-        self.std_loss = torch.sum(F.relu(features_std)) / (2*self.batch_size)
+        std_loss = torch.sum(F.relu(features_std)) / (2*self.batch_size)
         # print(std_loss)
         # nt xnet loss
-        if epochs > 100:
-            self.lamda = 3
         loss = loss.view(anchor_count, batch_size).mean()
-        total_loss = self.std_loss * self.lamda + loss
+        if self.lamda > 0:
+            total_loss = std_loss * self.lamda + loss
+        else:
+            total_loss = loss
         return total_loss
