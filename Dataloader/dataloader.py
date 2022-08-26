@@ -36,7 +36,7 @@ def generate_dataloader(data, name, transform=None):
     return dataloader
 
 
-def data_loader(dataset="cifar10", semi=False, semi_percent=10):
+def data_loader(dataset="cifar10", batch_size=512, semi=False, semi_percent=10):
     if dataset == 'cifar10':
         mean = (0.4914, 0.4822, 0.4465)
         std = (0.2023, 0.1994, 0.2010)
@@ -63,18 +63,18 @@ def data_loader(dataset="cifar10", semi=False, semi_percent=10):
     ])
     # datasets
     if dataset == "cifar10":
-        train_dataset = datasets.CIFAR10(root='../../DATA/', train=True, download=True, transform=train_transform)
-        test_dataset = datasets.CIFAR10(root='../../DATA/', train=False, download=True, transform=val_transform)
+        train_dataset = datasets.CIFAR10(root='../../DATA2/', train=True, download=True, transform=train_transform)
+        test_dataset = datasets.CIFAR10(root='../../DATA2/', train=False, download=True, transform=val_transform)
 
     elif dataset == "cifar100":
-        train_dataset = datasets.CIFAR100(root='../../DATA/', train=True, download=True, transform=train_transform)
-        test_dataset = datasets.CIFAR100(root='../../DATA/', train=False, download=True, transform=val_transform)
+        train_dataset = datasets.CIFAR100(root='../../DATA2/', train=True, download=True, transform=train_transform)
+        test_dataset = datasets.CIFAR100(root='../../DATA2/', train=False, download=True, transform=val_transform)
     elif dataset == "svhn":
         train_dataset = datasets.SVHN(
-            root='.../../DATA/', split="train", download=True, transform=train_transform
+            root='.../../DATA2/', split="train", download=True, transform=train_transform
         )
         test_dataset = datasets.SVHN(
-            root='../../DATA/', split="test", download=True, transform=val_transform
+            root='../../DATA2/', split="test", download=True, transform=val_transform
         )
     elif dataset == "isic":
         train_img_path, train_class_path, val_img_path, val_class_path, test_img = set_path()
@@ -96,18 +96,18 @@ def data_loader(dataset="cifar10", semi=False, semi_percent=10):
                                       len(train) - int(0.8 * len(train))])
 
     train_loader = DataLoader(train,
-                              batch_size=512,
+                              batch_size=batch_size,
                               shuffle=True,
                               num_workers=16,
                               drop_last=False)
     val_loader = DataLoader(val,
-                            batch_size=512,
+                            batch_size=batch_size,
                             shuffle=True,
                             num_workers=16,
                             drop_last=False)
 
     test_loader = DataLoader(test_dataset,
-                             batch_size=512,
+                             batch_size=batch_size,
                              num_workers=16,
                              drop_last=False)
 
@@ -122,7 +122,7 @@ def tiny_imagenet_dataloader():
     return train_loader, val_loader, test_loader
 
 
-def set_loader(dataset, batch_size, num_workers, semi_percent=10, data_folder='../../DATA/', pu=False, semi=False):
+def set_loader(dataset, batch_size, num_workers, semi_percent=10, data_folder='../../DATA2/', pu=False, semi=False):
     # construct data loader
     if dataset == 'cifar10':
         mean = (0.4914, 0.4822, 0.4465)
@@ -223,7 +223,7 @@ def set_loader(dataset, batch_size, num_workers, semi_percent=10, data_folder='.
     return train_loader, val_loader
 
 
-def set_loader_simclr(dataset, batch_size, num_workers, data_dir='../../DATA/', size=32):
+def set_loader_simclr(dataset, batch_size, num_workers, data_dir='../../DATA2/', size=32):
     # construct data loader
     if dataset == 'cifar10':
         mean = (0.4914, 0.4822, 0.4465)
