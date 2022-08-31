@@ -7,8 +7,9 @@ import torch
 import torch.nn.functional as F
 from utils.score_utils import calc_metrics_transformed
 from models.concatenate import MyEnsemble
-#from laplace import Laplace
+# from laplace import Laplace
 from Dataloader.dataloader import data_loader
+from Train.linear_eval import set_model_linear
 
 logger = logging.getLogger(__name__)
 
@@ -39,12 +40,13 @@ def set_model(model_name, n_cls, path):
 
 
 class LitBaseline(pl.LightningModule):
-    def __init__(self, ind_name, linear_path, model_path, n_cls, out_dir, LA=False):
+    def __init__(self, ind_name, linear_path, model_path, n_cls, out_dir, nh, LA=False):
         super().__init__()
         # self.model_name = model_name
         self.ind_name = ind_name
         self.LA = LA
-        model, classifier, criterion = set_model("resnet50", n_cls, model_path)
+        self.nh = nh
+        model, classifier, criterion = set_model_linear("resnet50", n_cls, model_path, nh=self.nh)
         classifier.load_state_dict(torch.load(linear_path))
 
         if LA:
@@ -95,7 +97,7 @@ class LitBaseline(pl.LightningModule):
 
     def forward(self, x):
         if self.LA:
-            #self.model1.eval()
+            # self.model1.eval()
             with torch.no_grad():
                 logits = self.model1(x)
         else:

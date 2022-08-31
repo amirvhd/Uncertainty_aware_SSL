@@ -54,7 +54,7 @@ def train(train_loader, model, classifier, criterion, optimizer, epoch, opt):
     data_time = AverageMeter()
     losses = AverageMeter()
     top1 = AverageMeter()
-
+    schedular= torch.optim.lr_scheduler. ExponentialLR(optimizer, gamma=0.9)
     end = time.time()
     for idx, (images, labels) in enumerate(train_loader):
         data_time.update(time.time() - end)
@@ -65,7 +65,7 @@ def train(train_loader, model, classifier, criterion, optimizer, epoch, opt):
         if opt.pu:
             images = images.reshape(images.shape[0], 3, 32, 32).float()
         # warm-up learning rate
-        warmup_learning_rate(opt, epoch, idx, len(train_loader), optimizer)
+        #warmup_learning_rate(opt, epoch, idx, len(train_loader), optimizer)
 
         # compute loss
         with torch.no_grad():
@@ -97,7 +97,7 @@ def train(train_loader, model, classifier, criterion, optimizer, epoch, opt):
                 epoch, idx + 1, len(train_loader), batch_time=batch_time,
                 data_time=data_time, loss=losses, top1=top1))
             sys.stdout.flush()
-
+    schedular.step()
     return losses.avg, top1.avg
 
 

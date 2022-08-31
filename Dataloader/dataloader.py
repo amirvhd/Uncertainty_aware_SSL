@@ -93,7 +93,7 @@ def data_loader(dataset="cifar10", batch_size=512, semi=False, semi_percent=10):
         train = train_dataset
 
     train, val = random_split(train, [int(0.8 * len(train)),
-                                      len(train) - int(0.8 * len(train))])
+                                      len(train) - int(0.8 * len(train))], generator=torch.Generator().manual_seed(42))
 
     train_loader = DataLoader(train,
                               batch_size=batch_size,

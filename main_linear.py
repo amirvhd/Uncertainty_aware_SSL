@@ -5,7 +5,7 @@ import time
 import math
 import torch
 import copy
-
+import os
 from Dataloader.dataloader import set_loader, data_loader
 from utils.util import adjust_learning_rate
 from utils.util import set_optimizer
@@ -114,8 +114,10 @@ def parse_option():
         opt.n_cls = 7
     else:
         raise ValueError('dataset not supported: {}'.format(opt.dataset))
+    opt.model_path = './saved_models/{}_models_ensemble/linear_models'.format(opt.dataset)
+    if not os.path.isdir(opt.model_path):
+        os.makedirs(opt.model_path)
 
-    opt.model_path = './saved_models/{}_linear_models'.format(opt.dataset)
     opt.classifier_path = './saved_models/{}_linear_models'.format(opt.dataset)
     return opt
 
@@ -133,8 +135,8 @@ def main():
         torch.manual_seed(i)
         torch.cuda.manual_seed(i)
         opt.ckpt = (
-            './saved_models/{}_models_UAloss/simclr_{}_{}_epoch800_{}heads_{}.pt'.format(opt.dataset, opt.dataset, i,
-                                                                                         opt.nh, opt.lamda))
+            './saved_models/{}_models_ensemble/simclr_{}_{}_epoch800_{}heads_{}.pt'.format(opt.dataset, opt.dataset, i,
+                                                                                           opt.nh, opt.lamda))
         # build model and criterion
         model, classifier, criterion = set_model_linear(model_name=opt.model, number_cls=opt.n_cls, path=opt.ckpt,
                                                         nh=opt.nh)
@@ -165,12 +167,12 @@ def main():
             writer.add_scalar("Loss/eval", val_loss, epoch)
 
             if val_acc > best_acc:
-                #   best_epoch = epoch
+                best_epoch = epoch
                 best_acc = val_acc
                 best_classifier = copy.deepcopy(classifier)
                 print('best accuracy: {:.2f}'.format(best_acc))
-            # if epoch - best_epoch > opt.patience:
-            #  break
+            if epoch - best_epoch > opt.patience:
+                break
         evaluate(test_loader, model, best_classifier, opt)
 
         writer.flush()
@@ -188,17 +190,19 @@ def main():
                                                                                                 opt.semi_percent))
         else:
             torch.save(best_classifier.state_dict(),
-                       './saved_models/{}_models_UAloss/simclr800_linear_{}_epoch{}_{}heads_{}.pt'.format(opt.dataset,
-                                                                                                          i,
-                                                                                                          opt.epochs,
-                                                                                                          opt.nh,
-                                                                                                          opt.lamda))
+                       './saved_models/{}_models_ensemble/linear_models/simclr800_linear_{}_epoch{}_{}heads_{}.pt'.format(
+                           opt.dataset,
+                           i,
+                           opt.epochs,
+                           opt.nh,
+                           opt.lamda))
             torch.save(model.state_dict(),
-                       './saved_models/{}_models_UAloss/simclr800_encoder_{}_epoch{}_{}heads_{}.pt'.format(opt.dataset,
-                                                                                                           i,
-                                                                                                           opt.epochs,
-                                                                                                           opt.nh,
-                                                                                                           opt.lamda))
+                       './saved_models/{}_models_ensemble/linear_models/simclr800_encoder_{}_epoch{}_{}heads_{}.pt'.format(
+                           opt.dataset,
+                           i,
+                           opt.epochs,
+                           opt.nh,
+                           opt.lamda))
 
 
 if __name__ == '__main__':

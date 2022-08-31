@@ -30,6 +30,8 @@ def parse_option():
                         help='number of ensemble models')
     parser.add_argument('--nh', type=int, default=5,
                         help='number of heads')
+    parser.add_argument('--lamda', type=int, default=1,
+                        help='number of heads')
     opt = parser.parse_args()
     return opt
 
@@ -80,11 +82,12 @@ def run_experiment():
         else:
             LA = False
 
-        linear_model_path = "./saved_models/{}_models_UAloss/simclr800_linear_{}_epoch100_{}heads.pt".format(
-            opt.dataset, i, opt.nh)
-        simclr_path = "./saved_models/{}_models_UAloss/simclr800_encoder_{}_epoch100_{}heads.pt".format(opt.dataset, i,
-                                                                                                        opt.nh)
-        lit_model_h = LitBaseline(opt.dataset, linear_model_path, simclr_path, n_cls, out_dir, LA)
+        linear_model_path = "./saved_models/{}_models_UAloss/linear_models/simclr800_linear_{}_epoch100_{}heads_{}.pt".format(
+            opt.dataset, i, opt.nh, opt.lamda)
+        simclr_path = "./saved_models/{}_models_UAloss/linear_models/simclr800_encoder_{}_epoch100_{}heads_{}.pt".format(
+            opt.dataset, i,
+            opt.nh, opt.lamda)
+        lit_model_h = LitBaseline(opt.dataset, linear_model_path, simclr_path, n_cls, out_dir, opt.nh, LA)
         baseline_df = baseline_df.append(execute_baseline(opt, lit_model_h, trainer, loaders_dict))
     ens = baseline_df.groupby(['ood_name']).mean()
     print(ens)

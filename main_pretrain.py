@@ -40,7 +40,8 @@ def parse_option():
                         help='num of workers to use')
     parser.add_argument('--epochs', type=int, default=10,
                         help='number of training epochs')
-
+    parser.add_argument('--ensemble', type=int, default=1,
+                        help='number of ensemble')
     # optimization
     parser.add_argument('--learning_rate', type=float, default=0.5,
                         help='learning rate')
@@ -90,7 +91,7 @@ def parse_option():
     # set the path according to the environment
     if opt.data_folder is None:
         opt.data_folder = '../../DATA2/'
-    opt.model_path = './saved_models/{}_models_UAloss'.format(opt.dataset)
+    opt.model_path = './saved_models/{}_models_ensemble'.format(opt.dataset)
     opt.tb_path = '../../DATA2/loggings_{}_models_UAloss_{}'.format(opt.dataset, opt.nh)
     opt.save_folder = opt.model_path
     if not os.path.isdir(opt.save_folder):
@@ -118,8 +119,8 @@ def main():
 
     # print(torch.cuda.is_available())
     # build model and criterion
-    ensemble = 1
-    for i in range(ensemble):
+    # ensemble = 1
+    for i in range(opt.ensemble):
         torch.manual_seed(i)
         torch.cuda.manual_seed(i)
         model, criterion = set_model(model_name=opt.model, temperature=opt.temp, syncBN=opt.syncBN, lamda=opt.lamda,
