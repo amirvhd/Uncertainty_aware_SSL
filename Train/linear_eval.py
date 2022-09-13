@@ -166,8 +166,8 @@ def predict(dataloader, model, laplace=False):
             if laplace:
                 py.append(model(x.to(device)))
             else:
-                py.append(torch.softmax(model(x.to(device)), dim=-1))
-
+                #py.append(torch.softmax(model(x.to(device)), dim=-1))
+                py.append(model(x.to(device)))
         res = torch.cat(py).cpu().detach().numpy()
 
     return res

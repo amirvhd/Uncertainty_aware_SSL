@@ -4,7 +4,7 @@ import os
 import argparse
 import time
 import math
-
+import pandas as pd
 import tensorboard_logger as tb_logger
 import torch
 from Train.pretrain import train, set_model
@@ -68,8 +68,12 @@ def parse_option():
                         help='temperature for loss function')
     parser.add_argument('--nh', type=int, default=1,
                         help='number of heads')
-    parser.add_argument('--lamda', type=int, default=1,
+    parser.add_argument('--lamda1', type=float, default=1,
                         help='number of heads')
+    parser.add_argument('--lamda2', type=float, default=0.1,
+                        help='number of heads')
+    parser.add_argument('--dl', action='store_true',
+                        help='using cosine annealing')
     # other setting
     parser.add_argument('--cosine', action='store_true',
                         help='using cosine annealing')
@@ -91,7 +95,7 @@ def parse_option():
     # set the path according to the environment
     if opt.data_folder is None:
         opt.data_folder = '../../DATA2/'
-    opt.model_path = './saved_models/{}_models_ensemble'.format(opt.dataset)
+    opt.model_path = './saved_models/{}_experiments'.format(opt.dataset)
     opt.tb_path = '../../DATA2/loggings_{}_models_UAloss_{}'.format(opt.dataset, opt.nh)
     opt.save_folder = opt.model_path
     if not os.path.isdir(opt.save_folder):
@@ -112,7 +116,10 @@ def parse_option():
 
 def main():
     opt = parse_option()
-
+    if opt.dl:
+        dl = True
+    else:
+        dl = False
     # build data loader
     train_loader = set_loader_simclr(dataset=opt.dataset, batch_size=opt.batch_size, num_workers=opt.num_workers,
                                      size=opt.size)
@@ -123,7 +130,8 @@ def main():
     for i in range(opt.ensemble):
         torch.manual_seed(i)
         torch.cuda.manual_seed(i)
-        model, criterion = set_model(model_name=opt.model, temperature=opt.temp, syncBN=opt.syncBN, lamda=opt.lamda,
+        model, criterion = set_model(model_name=opt.model, temperature=opt.temp, syncBN=opt.syncBN, lamda1=opt.lamda1,
+                                     lamda2=opt.lamda2, dl=dl,
                                      batch_size=opt.batch_size, nh=opt.nh)
 
         # build optimizer
@@ -133,25 +141,35 @@ def main():
         logger = tb_logger.Logger(logdir=opt.tb_path, flush_secs=2)
 
         time1 = time.time()
-
+        l1 = []
+        l2 = []
+        l3 = []
         # training routine
         for epoch in range(1, opt.epochs + 1):
             adjust_learning_rate(opt, optimizer, epoch)
             # train for one epoch
             time3 = time.time()
-            loss = train(train_loader, model, criterion, optimizer, epoch, opt)
+            loss, std_loss, std_loss2 = train(train_loader, model, criterion, optimizer, epoch, opt)
             time4 = time.time()
             print('ensemble {}, epoch {}, total time {:.2f}'.format(i, epoch, time4 - time3))
-
+            l1.append(loss)
+            l2.append(std_loss)
+            l3.append(std_loss2)
             # tensorboard logger
             logger.log_value('loss', loss, epoch)
             logger.log_value('learning_rate', optimizer.param_groups[0]['lr'], epoch)
             # logger.log_value('std', std_loss, epoch)
         time2 = time.time()
         print('ensemble {}, total time {:.2f}'.format(i, time2 - time1))
-
+        loss_res = pd.DataFrame({"total_loss": l1, "stdloss1": l2, "stdloss2": l3})
+        os.makedirs("./csv_loss", exist_ok=True)
+        loss_res.to_csv(
+            "./csv_loss/{}_c_{}heads_lamda1{}_lamda2{}_{}.csv".format(opt.dataset, opt.nh, opt.lamda1, opt.lamda2, dl))
         save_file = os.path.join(
-            opt.model_path, 'simclr_{}_{}_epoch{}_{}heads_{}.pt'.format(opt.dataset, i, opt.epochs, opt.nh, opt.lamda))
+            opt.model_path,
+            'simclr_{}_{}_epoch{}_{}heads_lamda1{}_lamda2{}_{}.pt'.format(opt.dataset, i, opt.epochs, opt.nh,
+                                                                          opt.lamda1,
+                                                                          opt.lamda2, dl))
         torch.save(model.state_dict(), save_file)
 
 

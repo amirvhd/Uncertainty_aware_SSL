@@ -1,3 +1,4 @@
+import os
 import time
 import argparse
 
@@ -8,6 +9,8 @@ import torch
 from Dataloader.dataset_utils import get_data_loaders
 from utils.baseline_lit_utils import LitBaseline
 from utils.method_utils import execute_baseline
+from Dataloader.dataset_c_un import get_data_loaders_c
+from Dataloader.label_un_data import download
 
 
 def parse_option():
@@ -24,14 +27,20 @@ def parse_option():
                         help='')
     parser.add_argument('--LA', action='store_true',
                         help='')
+    parser.add_argument('--c', action='store_true',
+                        help='label corruption')
     parser.add_argument('--seed', type=int, default=1234,
                         help='random seed')
     parser.add_argument('--ensemble', type=int, default=1,
                         help='number of ensemble models')
     parser.add_argument('--nh', type=int, default=5,
                         help='number of heads')
-    parser.add_argument('--lamda', type=int, default=1,
+    parser.add_argument('--lamda1', type=float, default=1,
                         help='number of heads')
+    parser.add_argument('--lamda2', type=float, default=0.1,
+                        help='number of heads')
+    parser.add_argument('--dl', action='store_true',
+                        help='using cosine annealing')
     opt = parser.parse_args()
     return opt
 
@@ -39,14 +48,17 @@ def parse_option():
 def run_experiment():
     t0 = time.time()
     opt = parse_option()
-    # out_dir = os.getcwd()
+    download(opt)
     out_dir = "./logs"
     pl.seed_everything(opt.seed)
     if opt.dev_run:
         dev_run = True
     else:
         dev_run = False
-
+    if opt.dl:
+        dl = True
+    else:
+        dl = False
     # Initialize trainer
     trainer = pl.Trainer(
         gpus=1 if torch.cuda.is_available() else 0,
@@ -70,27 +82,49 @@ def run_experiment():
     for i in range(opt.ensemble):
         print("ensmeble number is {}".format(i))
         # Load datasets
-        loaders_dict = get_data_loaders(
-            opt.dataset,
-            opt.data_dir,
-            opt.batch_size,
-            opt.num_workers if dev_run is False else 0,
-            dev_run,
-        )
+        if opt.c:
+            loaders_dict = get_data_loaders_c(
+                opt.dataset,
+                opt.data_dir,
+                opt.batch_size,
+                opt.num_workers if dev_run is False else 0,
+                dev_run,
+            )
+        else:
+            loaders_dict = get_data_loaders(
+                opt.dataset,
+                opt.data_dir,
+                opt.batch_size,
+                opt.num_workers if dev_run is False else 0,
+                dev_run,
+            )
         if opt.LA:
             LA = True
         else:
             LA = False
-
-        linear_model_path = "./saved_models/{}_models_UAloss/linear_models/simclr800_linear_{}_epoch100_{}heads_{}.pt".format(
-            opt.dataset, i, opt.nh, opt.lamda)
-        simclr_path = "./saved_models/{}_models_UAloss/linear_models/simclr800_encoder_{}_epoch100_{}heads_{}.pt".format(
-            opt.dataset, i,
-            opt.nh, opt.lamda)
+        linear_model_path = "./saved_models/{}_models_ensemble/linear_models/simclr800_linear_{}_epoch100_1heads_0.pt".format(opt.dataset,
+            i)
+        simclr_path = "./saved_models/{}_models_ensemble/linear_models/simclr800_encoder_{}_epoch100_1heads_0.pt".format(opt.dataset,
+            i)
+        # linear_model_path = './saved_models/{}_experiments/linear_models/simclr800_linear_{}_epoch100_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
+        #     opt.dataset,
+        #     i,
+        #     opt.nh,
+        #     opt.lamda1,
+        #     opt.lamda2, dl)
+        # simclr_path = './saved_models/{}_experiments/linear_models/simclr800_encoder_{}_epoch100_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
+        #     opt.dataset,
+        #     i,
+        #     opt.nh,
+        #     opt.lamda1,
+        #     opt.lamda2, dl)
         lit_model_h = LitBaseline(opt.dataset, linear_model_path, simclr_path, n_cls, out_dir, opt.nh, LA)
         baseline_df = baseline_df.append(execute_baseline(opt, lit_model_h, trainer, loaders_dict))
     ens = baseline_df.groupby(['ood_name']).mean()
     print(ens)
+    os.makedirs("./csv_results", exist_ok=True)
+    ens.to_csv("./csv_results/{}_c_{}heads_lamda1{}_lamda2{}_{}.csv".format(opt.dataset, opt.nh, opt.lamda1,
+                                                                            opt.lamda2, dl))
     print("Finish in {:.2f} sec. out_dir={}".format(time.time() - t0, out_dir))
 
 

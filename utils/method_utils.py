@@ -24,7 +24,6 @@ def execute_baseline(
     baseline_results = []
     for i, (ood_name, ood_dataloader) in enumerate(loaders_dict.items()):
         t0 = time.time()
-
         # Evaluate ood score
         lit_model_h.set_ood(ood_name)
         trainer.test(lit_model_h, dataloaders=ood_dataloader, ckpt_path=None, verbose=False)

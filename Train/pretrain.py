@@ -15,7 +15,8 @@ def train(train_loader, model, criterion, optimizer, epoch, opt):
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
-
+    stdlosses = AverageMeter()
+    stdlosses2 = AverageMeter()
     end = time.time()
     for idx, ((image1, image2), labels) in enumerate(train_loader):
         data_time.update(time.time() - end)
@@ -31,10 +32,11 @@ def train(train_loader, model, criterion, optimizer, epoch, opt):
         # compute features and features std
         features, features_std = model(image1, image2)
         # compute loss
-        loss = criterion(features, features_std, epoch)
+        loss, std_loss, std_loss2 = criterion(features, features_std, epoch)
         # update metric
         losses.update(loss.item(), bsz)
-
+        stdlosses.update(std_loss.item(), bsz)
+        stdlosses2.update(std_loss2.item(), bsz)
         # SGD
         optimizer.zero_grad()
         loss.backward()
@@ -54,13 +56,13 @@ def train(train_loader, model, criterion, optimizer, epoch, opt):
                 data_time=data_time, loss=losses))
             sys.stdout.flush()
 
-    return losses.avg
+    return losses.avg, stdlosses.avg, stdlosses2.avg
 
 
-def set_model(model_name, temperature, syncBN=False, lamda=1,
+def set_model(model_name, temperature, syncBN=False, lamda1=1, lamda2=0.1, dl=False,
               batch_size=512, nh=5):
     model = SupConResNet(name=model_name, n_heads=nh)
-    criterion = SupConLoss(temperature=temperature, lamda=lamda, batch_size=batch_size)
+    criterion = SupConLoss(temperature=temperature, lamda1=lamda1, lamda2=lamda2, dl=dl, batch_size=batch_size)
 
     # enable synchronized Batch Normalization
 

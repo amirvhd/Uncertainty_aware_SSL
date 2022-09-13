@@ -142,10 +142,8 @@ class LitBaseline(pl.LightningModule):
         else:
             logits = self.forward(x)
             probs = torch.nn.functional.softmax(logits, dim=-1)
-
         y_hat = probs.argmax(dim=-1)
         is_correct = y_hat == y
-
         output = {
             "probs": probs,
             "is_correct": is_correct,
@@ -156,7 +154,6 @@ class LitBaseline(pl.LightningModule):
     def test_epoch_end(self, outputs):
         probs = torch.vstack([out["probs"] for out in outputs])
         acc = torch.hstack([out["is_correct"] for out in outputs]).float().mean() * 100
-
         # Compute the normalization factor
         max_probs = torch.max(probs, dim=-1).values.cpu().numpy()
 

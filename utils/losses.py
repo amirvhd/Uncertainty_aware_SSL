@@ -14,12 +14,14 @@ class SupConLoss(nn.Module):
     It also supports the unsupervised contrastive loss in SimCLR"""
 
     def __init__(self, temperature=0.07, contrast_mode='all',
-                 base_temperature=0.07, lamda=1, batch_size=512):
+                 base_temperature=0.07, lamda1=1, lamda2=0.1, dl=False, batch_size=512):
         super(SupConLoss, self).__init__()
         self.temperature = temperature
         self.contrast_mode = contrast_mode
         self.base_temperature = base_temperature
-        self.lamda = lamda
+        self.lamda1 = lamda1
+        self.lamda2 = lamda2
+        self.dl = dl
         self.batch_size = batch_size
 
     def forward(self, features, features_std, epochs):
@@ -83,17 +85,18 @@ class SupConLoss(nn.Module):
         # loss
         loss = - (self.temperature / self.base_temperature) * mean_log_prob_pos
         # uncertainty loss
-        std_loss = torch.sum(F.relu(features_std)) / (2 * self.batch_size)
+        std_loss1 = torch.sum(F.relu(self.lamda2 - features_std)) / (2 * self.batch_size)
+        std_loss2 = torch.sum(F.relu(features_std)) / (2 * self.batch_size)
         # print(std_loss)
         # nt xnet loss
         loss = loss.view(anchor_count, batch_size).mean()
-        #self.lamda = 0.005 * epochs
-        #if self.lamda > 3:
-        #    self.lamda = 3
 
-        if self.lamda > 0:
-            total_loss = std_loss * self.lamda + loss
+        if self.lamda1 > 0:
+            if self.dl:
+                total_loss = std_loss1 * self.lamda1 + loss + std_loss2
+            else:
+                total_loss = std_loss1 * self.lamda1 + loss
         else:
             total_loss = loss
 
-        return total_loss
+        return total_loss, std_loss1, std_loss2

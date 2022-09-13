@@ -11,8 +11,9 @@ from torch.utils.data.dataloader import DataLoader
 from torchvision import datasets
 from torchvision import transforms
 from torchvision.datasets.folder import ImageFolder, default_loader
-#from isic import set_path
-#from isicDataset import ISICDataset
+
+# from isic import set_path
+# from isicDataset import ISICDataset
 
 logger = logging.getLogger(__name__)
 testsets_names = [
@@ -223,9 +224,9 @@ def get_data_loaders(
     trainloader_svhn, testloader_svhn = get_svhn_loaders(
         get_data_transform("svhn"), root, batch_size, n_workers
     )
-    #trainloader_isic, testloader_isic = get_isic_loaders(
+    # trainloader_isic, testloader_isic = get_isic_loaders(
     #    get_data_transform("isic"), root, batch_size, n_workers
-    #)
+    # )
     # Load out of distribution datasets
     loaders_dict = {}
     for name in testsets_names:
@@ -261,6 +262,7 @@ def get_data_loaders(
         loaders_dict["svhn"] = testloader_svhn
         loaders_dict["cifar10"] = testloader_cifar10
         loaders_dict["cifar100"] = testloader_cifar100
+
 
     elif trainset_name == "isic":
         loaders_dict["trainset"] = trainloader_isic

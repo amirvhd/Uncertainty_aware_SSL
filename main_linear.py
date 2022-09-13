@@ -81,8 +81,12 @@ def parse_option():
                         help='number of ensemble models')
     parser.add_argument('--nh', type=int, default=1,
                         help='number of heads')
-    parser.add_argument('--lamda', type=int, default=1,
+    parser.add_argument('--lamda1', type=float, default=1,
                         help='number of heads')
+    parser.add_argument('--lamda2', type=float, default=0.1,
+                        help='number of heads')
+    parser.add_argument('--dl', action='store_true',
+                        help='using cosine annealing')
     opt = parser.parse_args()
 
     # set the path according to the environment
@@ -114,7 +118,7 @@ def parse_option():
         opt.n_cls = 7
     else:
         raise ValueError('dataset not supported: {}'.format(opt.dataset))
-    opt.model_path = './saved_models/{}_models_ensemble/linear_models'.format(opt.dataset)
+    opt.model_path = './saved_models/{}_experiments/linear_models'.format(opt.dataset)
     if not os.path.isdir(opt.model_path):
         os.makedirs(opt.model_path)
 
@@ -123,20 +127,28 @@ def parse_option():
 
 
 def main():
-    best_acc = 0
     opt = parse_option()
+    if opt.dl:
+        dl = True
+    else:
+        dl = False
     writer = SummaryWriter(log_dir=opt.tb_path)
-    best_epoch = 0
     # build data loader
     train_loader, val_loader, test_loader, _ = data_loader(dataset=opt.dataset, batch_size=opt.batch_size)
     # train_loader, val_loader = set_loader(dataset=opt.dataset, batch_size=opt.batch_size, num_workers=opt.num_workers)
     ensemble = opt.ensemble
     for i in range(ensemble):
+        best_acc = 0
+        best_epoch = 0
         torch.manual_seed(i)
         torch.cuda.manual_seed(i)
         opt.ckpt = (
-            './saved_models/{}_models_ensemble/simclr_{}_{}_epoch800_{}heads_{}.pt'.format(opt.dataset, opt.dataset, i,
-                                                                                           opt.nh, opt.lamda))
+            './saved_models/{}_experiments/simclr_{}_{}_epoch800_{}heads_lamda1{}_lamda2{}_{}.pt'.format(opt.dataset,
+                                                                                                         opt.dataset, i,
+                                                                                                         opt.nh,
+                                                                                                         opt.lamda1,
+                                                                                                         opt.lamda2,
+                                                                                                         dl))
         # build model and criterion
         model, classifier, criterion = set_model_linear(model_name=opt.model, number_cls=opt.n_cls, path=opt.ckpt,
                                                         nh=opt.nh)
@@ -146,7 +158,7 @@ def main():
         optimizer = set_optimizer(opt, classifier)
         print('ensemble number is {}:'.format(i))
         # training routine
-        best_classifier = None
+        # best_classifier = None
         for epoch in range(1, opt.epochs + 1):
             adjust_learning_rate(opt, optimizer, epoch)
 
@@ -190,19 +202,21 @@ def main():
                                                                                                 opt.semi_percent))
         else:
             torch.save(best_classifier.state_dict(),
-                       './saved_models/{}_models_ensemble/linear_models/simclr800_linear_{}_epoch{}_{}heads_{}.pt'.format(
+                       './saved_models/{}_experiments/linear_models/simclr800_linear_{}_epoch{}_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
                            opt.dataset,
                            i,
                            opt.epochs,
                            opt.nh,
-                           opt.lamda))
+                           opt.lamda1,
+                           opt.lamda2, dl))
             torch.save(model.state_dict(),
-                       './saved_models/{}_models_ensemble/linear_models/simclr800_encoder_{}_epoch{}_{}heads_{}.pt'.format(
+                       './saved_models/{}_experiments/linear_models/simclr800_encoder_{}_epoch{}_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
                            opt.dataset,
                            i,
                            opt.epochs,
                            opt.nh,
-                           opt.lamda))
+                           opt.lamda1,
+                           opt.lamda2, dl))
 
 
 if __name__ == '__main__':

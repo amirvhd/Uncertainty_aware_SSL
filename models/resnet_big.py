@@ -179,6 +179,7 @@ class SupConResNet(nn.Module):
         elif head == 'mlp':
             self.proj = nn.ModuleList()
             for i in range(n_heads):
+
                 pro = nn.Sequential(
                     nn.Linear(dim_in, dim_in),
                     nn.ReLU(inplace=True),
