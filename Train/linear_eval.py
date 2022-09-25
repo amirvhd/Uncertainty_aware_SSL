@@ -2,11 +2,10 @@ import sys
 import time
 import torch
 from utils.util import AverageMeter, accuracy
-from utils.util import warmup_learning_rate
 from models.resnet_big import SupConResNet, LinearClassifier
 import torch.backends.cudnn as cudnn
 from torch import nn
-from sklearn.metrics import classification_report, balanced_accuracy_score
+from sklearn.metrics import classification_report
 
 
 class MyDataParallel(torch.nn.DataParallel):

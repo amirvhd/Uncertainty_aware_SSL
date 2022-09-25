@@ -3,7 +3,7 @@ import time
 import torch
 from utils.util import AverageMeter
 from utils.util import warmup_learning_rate
-from models.resnet_big import SupConResNet, LinearClassifier
+from models.resnet_big import SupConResNet
 from utils.losses import SupConLoss
 import torch.backends.cudnn as cudnn
 from torch import nn
@@ -76,6 +76,3 @@ def set_model(model_name, temperature, syncBN=False, lamda1=1, lamda2=0.1, dl=Fa
         cudnn.benchmark = True
 
     return model, criterion
-
-
-
