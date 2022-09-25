@@ -1,7 +1,6 @@
 import torch
 import argparse
 from torchvision.models import resnet50
-from netcal.metrics import ECE
 import torch.distributions as dists
 from models.concatenate import MyEnsemble
 import numpy as np
@@ -107,9 +106,7 @@ def ensemble(n, nh, lamda1, lamda2, dataset, targets, n_cls, test_loader, dl=Fal
     ace_res = ace.loss(output=probs_ensemble2, labels=targets, logits=True)
     tace_res = tace.loss(output=probs_ensemble2, labels=targets, logits=True)
     ece_res = ece.loss(output=probs_ensemble2, labels=targets, logits=True, n_bins=15)
-    # print(ece.bin_prop)
     mce_res = mce.loss(output=probs_ensemble2, labels=targets, logits=True, n_bins=5)
-    ece_ensemble2 = ECE(bins=15).measure(probs_ensemble2, targets)
     nll_ensemble2 = -dists.Categorical(torch.softmax(torch.tensor(probs_ensemble2), dim=-1)).log_prob(
         torch.tensor(targets)).mean()
     results = {
