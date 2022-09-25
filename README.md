@@ -1,4 +1,19 @@
+![Logo](https://blog.rwth-aachen.de/forschungsdaten/files/2019/09/BERD@NFDI-Logo.png)
 
+
+# 
+
+This repository is for . It contains the example codes for different task descriptions. 
+
+
+
+## Table of contents
+* [Badges](#general-information)
+* [Installation](#Installation)
+* [Datasets](#Datasets)
+* [Usage/Examples](#Usage/Examples)
+* [Acknowledgements](#Acknowledgements)
+* [Feedback](#Feedback)
 ## Badges
 
 Add badges from somewhere like: [shields.io](https://shields.io/)
@@ -46,6 +61,22 @@ python uncertainty_metric.py
 python main_execute_method.py
 ```
  
+
+
+## Acknowledgements
+This code is adapted based on the following links:
+
+ - [Topic modeling](https://github.com/MaartenGr/BERTopic)
+ - [Multi-label-Text-classification](https://curiousily.com/posts/multi-label-text-classification-with-bert-and-pytorch-lightning/)
+ - [Image Segmentation](https://colab.research.google.com/github/qubvel/segmentation_models.pytorch/blob/master/examples/binary_segmentation_intro.ipynb#scrollTo=PeGCIYNlVx5y)
+
+
+
+## Feedback
+
+If you have any feedback, please reach out to us at A.vahidi@campus.lmu.de
+
+
 ## Acknowledgements
 This code is adapted based on the following repositories:
 
