@@ -1,7 +1,6 @@
 import torch
 import argparse
 from torchvision.models import resnet50
-from laplace import Laplace
 from netcal.metrics import ECE
 import torch.distributions as dists
 from models.concatenate import MyEnsemble

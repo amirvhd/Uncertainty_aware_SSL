@@ -1,17 +1,14 @@
 import os
 import time
 import argparse
-from utils.metrics import OELoss, SCELoss, TACELoss, ACELoss, ECELoss, MCELoss
 import pandas as pd
 import pytorch_lightning as pl
 import torch
-import torch.distributions as dists
 from Dataloader.dataset_utils import get_data_loaders
 from utils.baseline_lit_utils import LitBaseline
 from utils.method_utils import execute_baseline
 from Dataloader.dataset_c_un import get_data_loaders_c
 from Dataloader.label_un_data import download
-import numpy as np
 
 
 def parse_option():
@@ -25,8 +22,6 @@ def parse_option():
     parser.add_argument('--num_workers', type=int, default=16,
                         help='num of workers to use')
     parser.add_argument('--dev_run', action='store_true',
-                        help='')
-    parser.add_argument('--LA', action='store_true',
                         help='')
     parser.add_argument('--c', action='store_true',
                         help='label corruption')
@@ -99,10 +94,6 @@ def run_experiment():
                 opt.num_workers if dev_run is False else 0,
                 dev_run,
             )
-        if opt.LA:
-            LA = True
-        else:
-            LA = False
         # linear_model_path = "./saved_models/{}_models_ensemble/linear_models/simclr800_linear_{}_epoch100_1heads_0.pt".format(
         #     opt.dataset,
         #     i)

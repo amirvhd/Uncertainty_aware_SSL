@@ -1,10 +1,14 @@
 import logging
 
+from os.path import join as osj
+import os
 import numpy as np
 from PIL import Image
 from torch.utils import data
 from torchvision import datasets
 from torchvision import transforms
+
+from Dataloader.label_un_data import Data_un
 
 logger = logging.getLogger(__name__)
 testsets_names = [
@@ -100,9 +104,6 @@ def get_data_transform(trainset_name: str):
     elif trainset_name == "svhn":
         mean = (0.4376821, 0.4437697, 0.47280442)
         std = (0.19803012, 0.20101562, 0.19703614)
-    elif trainset_name == "isic":
-        mean = (0.485, 0.456, 0.406)
-        std = (0.229, 0.224, 0.225)
     else:
         raise ValueError(f"{trainset_name} is not supported")
     normalize = transforms.Normalize(mean=mean, std=std)
@@ -113,14 +114,14 @@ def get_data_transform(trainset_name: str):
     return data_transform
 
 
-def get_data_loaders(
+def get_data_loaders_c(
         trainset_name: str,
         root: str,
         batch_size: int = 128,
         n_workers: int = 4,
         dev_run: bool = False,
 ) -> dict:
-    assert trainset_name in ["cifar10", "cifar100", "svhn", "isic"]
+    assert trainset_name in ["cifar10", "cifar100"]
     data_transform = transforms.Compose([
         transforms.ToTensor(),
     ])
@@ -131,43 +132,30 @@ def get_data_loaders(
     trainloader_cifar100, testloader_cifar100 = get_cifar100_loaders(
         get_data_transform("cifar100"), root, batch_size, n_workers
     )
-    trainloader_svhn, testloader_svhn = get_svhn_loaders(
-        get_data_transform("svhn"), root, batch_size, n_workers
-    )
-    trainloader_cifar10h, testloader_cifar10h = get_cifar10h_loaders(
-        get_data_transform("cifar10"), root, batch_size, n_workers
-    )
+
     # Load out of distribution datasets
     loaders_dict = {}
-    for name in testsets_names:
-        if dev_run is True:
-            break
-        elif name == "Uniform":
-            loaders_dict["Uniform"] = get_uniform_noise_loader(
-                data_transform, batch_size, n_workers
-            )
-        elif name == "Gaussian":
-            loaders_dict["Gaussian"] = get_gaussian_noise_loader(
-                data_transform, batch_size, n_workers
-            )
 
-    if trainset_name == "svhn":
-        loaders_dict["trainset"] = trainloader_svhn
-        loaders_dict["svhn"] = testloader_svhn
-        loaders_dict["cifar10"] = testloader_cifar10
-        loaders_dict["cifar100"] = testloader_cifar100
-
-    elif trainset_name == "cifar100":
+    if trainset_name == "cifar100":
         loaders_dict["trainset"] = trainloader_cifar100
-        loaders_dict["svhn"] = testloader_svhn
         loaders_dict["cifar100"] = testloader_cifar100
-        loaders_dict["cifar10"] = testloader_cifar10
-
+        path = osj(root, "CIFAR-100-C")
+        tr = [f for f in os.listdir(path) if f.endswith('.npy')]
+        for name in tr:
+            if name != "labels.npy":
+                for k in range(1, 6):
+                    index = name + str(k)
+                    loaders_dict[index] = get_cifar100C_loaders(None, root, batch_size, n_workers, tra=name, s=k)
     elif trainset_name == "cifar10":
         loaders_dict["trainset"] = trainloader_cifar10
-        loaders_dict["svhn"] = testloader_svhn
         loaders_dict["cifar10"] = testloader_cifar10
-        loaders_dict["cifar100"] = testloader_cifar100
+        path = osj(root, "CIFAR-10-C")
+        tr = [f for f in os.listdir(path) if f.endswith('.npy')]
+        for name in tr:
+            if name != "labels.npy":
+                for k in range(1, 6):
+                    index = name + str(k)
+                    loaders_dict[index] = get_cifar10C_loaders(None, root, batch_size, n_workers, tra=name, s=k)
 
     else:
         raise ValueError(f"trainset_name={trainset_name}")
@@ -200,7 +188,7 @@ def get_cifar10_loaders(
         shuffle=False,
         num_workers=num_workers,
         persistent_workers=True,
-        drop_last=True,
+        drop_last=False,
         pin_memory=False,
     )
 
@@ -213,7 +201,7 @@ def get_cifar10_loaders(
         shuffle=False,
         num_workers=num_workers,
         persistent_workers=True,
-        drop_last=True,
+        drop_last=False,
         pin_memory=False,
     )
     return trainloader, testloader
@@ -241,7 +229,7 @@ def get_cifar100_loaders(
         shuffle=False,
         num_workers=num_workers,
         persistent_workers=True,
-        drop_last=True,
+        drop_last=False,
         pin_memory=False,
     )
 
@@ -254,44 +242,7 @@ def get_cifar100_loaders(
         shuffle=False,
         num_workers=num_workers,
         persistent_workers=True,
-        drop_last=True,
-        pin_memory=False,
-    )
-    return trainloader, testloader
-
-
-def get_svhn_loaders(
-        data_transform,
-        data_dir: str = "../../DATA2/",
-        batch_size: int = 128,
-        num_workers: int = 4,
-):
-    """
-    create train and test pytorch dataloaders for CIFAR100 dataset
-    :param data_dir: the folder that will contain the data
-    :param batch_size: the size of the batch for test and train loaders
-    :param num_workers: number of cpu workers which loads the GPU with the dataset
-    :return: train and test loaders along with mapping between labels and class names
-    """
-    trainset = datasets.SVHN(
-        root=data_dir, split="train", download=True, transform=data_transform
-    )
-    trainloader = data.DataLoader(
-        trainset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
-        pin_memory=False,
-    )
-
-    testset = datasets.SVHN(
-        root=data_dir, split="test", download=True, transform=data_transform
-    )
-    testloader = data.DataLoader(
-        testset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
+        drop_last=False,
         pin_memory=False,
     )
     return trainloader, testloader
@@ -332,6 +283,70 @@ def get_gaussian_noise_loader(
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
+        pin_memory=False,
+    )
+    return testloader
+
+
+def get_cifar10C_loaders(
+        data_transform=None,
+        data_dir: str = "../../DATA2/",
+        batch_size: int = 128,
+        num_workers: int = 4,
+        tra: str = "fog.npy",
+        s: int = 1
+):
+    """
+    create train and test pytorch dataloaders for CIFAR10 dataset
+    :param data_dir: the folder that will contain the data
+    :param batch_size: the size of the batch for test and train loaders
+    :param num_workers: number of cpu workers which loads the GPU with the dataset
+    :return: train and test loaders along with mapping between labels and class names
+    """
+    path = osj(data_dir, "CIFAR-10-C")
+
+    testset = Data_un(
+        img_path=path, tr=tra, severity=s
+    )
+    testloader = data.DataLoader(
+        testset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        persistent_workers=True,
+        drop_last=False,
+        pin_memory=False,
+    )
+    return testloader
+
+
+def get_cifar100C_loaders(
+        data_transform=None,
+        data_dir: str = "../../DATA2/",
+        batch_size: int = 128,
+        num_workers: int = 4,
+        tra: str = "fog.npy",
+        s: int = 1
+):
+    """
+    create train and test pytorch dataloaders for CIFAR10 dataset
+    :param data_dir: the folder that will contain the data
+    :param batch_size: the size of the batch for test and train loaders
+    :param num_workers: number of cpu workers which loads the GPU with the dataset
+    :return: train and test loaders along with mapping between labels and class names
+    """
+    path = osj(data_dir, "CIFAR-100-C")
+
+    testset = Data_un(
+        img_path=path, tr=tra, severity=s
+    )
+    testloader = data.DataLoader(
+        testset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        persistent_workers=True,
+        drop_last=False,
         pin_memory=False,
     )
     return testloader

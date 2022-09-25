@@ -13,13 +13,6 @@ from Dataloader.dataloader import set_loader_simclr
 from utils.util import adjust_learning_rate
 from utils.util import set_optimizer
 
-"""
-python main.py --batch_size 512\
-  --learning_rate 0.5 \
-  --temp 0.5 \
-  --cosine
-"""
-
 try:
     import apex
     from apex import amp, optimizers
@@ -32,8 +25,6 @@ def parse_option():
 
     parser.add_argument('--print_freq', type=int, default=10,
                         help='print frequency')
-    parser.add_argument('--save_freq', type=int, default=50,
-                        help='save frequency')
     parser.add_argument('--batch_size', type=int, default=512,
                         help='batch_size')
     parser.add_argument('--num_workers', type=int, default=4,
@@ -58,8 +49,6 @@ def parse_option():
     parser.add_argument('--model', type=str, default='resnet50')
     parser.add_argument('--dataset', type=str, default='cifar10',
                         choices=['cifar10', 'cifar100', 'svhn', 'isic', "skin"], help='dataset')
-    parser.add_argument('--mean', type=str, help='mean of dataset in path in form of str tuple')
-    parser.add_argument('--std', type=str, help='std of dataset in path in form of str tuple')
     parser.add_argument('--data_folder', type=str, default=None, help='path to custom dataset')
     parser.add_argument('--size', type=int, default=32, help='parameter for RandomResizedCrop')
 
@@ -77,12 +66,8 @@ def parse_option():
     # other setting
     parser.add_argument('--cosine', action='store_true',
                         help='using cosine annealing')
-    parser.add_argument('--syncBN', action='store_true',
-                        help='using synchronized batch normalization')
     parser.add_argument('--warm', action='store_true',
                         help='warm-up for large batch training')
-    parser.add_argument('--trial', type=str, default='0',
-                        help='id for recording multiple runs')
 
     opt = parser.parse_args()
 
@@ -124,9 +109,6 @@ def main():
     train_loader = set_loader_simclr(dataset=opt.dataset, batch_size=opt.batch_size, num_workers=opt.num_workers,
                                      size=opt.size)
 
-    # print(torch.cuda.is_available())
-    # build model and criterion
-    # ensemble = 1
     for i in range(opt.ensemble):
         torch.manual_seed(i)
         torch.cuda.manual_seed(i)

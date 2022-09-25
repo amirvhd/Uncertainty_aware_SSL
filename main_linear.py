@@ -6,37 +6,24 @@ import math
 import torch
 import copy
 import os
-from Dataloader.dataloader import set_loader, data_loader
+from Dataloader.dataloader import data_loader
 from utils.util import adjust_learning_rate
 from utils.util import set_optimizer
 
-# from laplace import Laplace
-from Train.linear_eval import set_model_linear, train, evaluate, predict, validate
-# import tensorboard_logger as tb_logger
+from Train.linear_eval import set_model_linear, train, evaluate, validate
 from torch.utils.tensorboard import SummaryWriter
-from sklearn.metrics import balanced_accuracy_score
 try:
     import apex
     from apex import amp, optimizers
 except ImportError:
     pass
 
-"""
-tensorboard --logdir=~/DATA/loggings_cifar10_models_UAloss/linear_evaluation/exp1 --port 6006
-on your pc:
-ssh -N -f -L localhost:16006:localhost:6006 ra49bid2@datalab2.srv.lrz.de
-on browser:
-http://localhost:16006
-"""
+
 
 
 def parse_option():
     parser = argparse.ArgumentParser('argument for training')
 
-    parser.add_argument('--print_freq', type=int, default=10,
-                        help='print frequency')
-    parser.add_argument('--save_freq', type=int, default=50,
-                        help='save frequency')
     parser.add_argument('--batch_size', type=int, default=512,
                         help='batch_size')
     parser.add_argument('--num_workers', type=int, default=16,
@@ -73,8 +60,6 @@ def parse_option():
                         help='path to pre-trained model')
     parser.add_argument('--semi', action='store_true',
                         help='semi-supervised')
-    parser.add_argument('--pu', action='store_true',
-                        help='positive unlabeled mode')
     parser.add_argument('--semi_percent', type=int, default=10,
                         help='percentage of data usage in semi-supervised')
     parser.add_argument('--ensemble', type=int, default=1,
@@ -139,7 +124,6 @@ def main():
     # build data loader
     train_loader, val_loader, test_loader, _ = data_loader(dataset=opt.dataset, batch_size=opt.batch_size,
                                                            semi=opt.semi, semi_percent=opt.semi_percent)
-    # train_loader, val_loader = set_loader(dataset=opt.dataset, batch_size=opt.batch_size, num_workers=opt.num_workers)
     ensemble = opt.ensemble
     for i in range(ensemble):
         best_acc = 0
@@ -166,7 +150,7 @@ def main():
         optimizer = set_optimizer(opt, classifier)
         print('ensemble number is {}:'.format(i))
         # training routine
-        # best_classifier = None
+
         for epoch in range(1, opt.epochs + 1):
             adjust_learning_rate(opt, optimizer, epoch)
 
@@ -183,9 +167,8 @@ def main():
             val_loss, val_acc = validate(val_loader, model, classifier, criterion, opt)
             writer.add_scalar("Loss/train", loss, epoch)
             writer.add_scalar('train/learning_rate', optimizer.param_groups[0]['lr'], epoch)
-           # writer.add_scalar('accuracy', val_acc, epoch)
-            #writer.add_scalar("Loss/eval", val_loss, epoch)
-            # val_acc = evaluate(test_loader, model, classifier, opt)
+            writer.add_scalar('accuracy', val_acc, epoch)
+            writer.add_scalar("Loss/eval", val_loss, epoch)
             if val_acc > best_acc:
                 best_epoch = epoch
                 best_acc = val_acc
