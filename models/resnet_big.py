@@ -7,10 +7,7 @@ Adapted from: https://github.com/bearpaw/pytorch-classification
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-from models.batchensemble_resnet import BatchEnsembleResNet50, BatchEnsembleResNet34
-from models.batchensemble_layers import BatchEnsembleLinear
-from models.resent50_dropout import resnet50_dropout_torch
+
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -148,7 +145,6 @@ model_dict = {
     'resnet34': [resnet34, 512],
     'resnet50': [resnet50, 2048],
     'resnet101': [resnet101, 2048],
-    'be_resnet50': [BatchEnsembleResNet50(task_count=4, num_classes=10), 2048]
 }
 
 
@@ -172,37 +168,23 @@ class SupConResNet(nn.Module):
 
     def __init__(self, name='resnet50', head='mlp', feat_dim=128, n_heads=5):
         super(SupConResNet, self).__init__()
-        if name == "be_resnet50":
-            self.encoder = BatchEnsembleResNet50(task_count=4, num_classes=10)
-            dim_in = 2048
-        elif name == "mcdrop_resnet50":
-            self.encoder = resnet50_dropout_torch(dropout_rate=0.2)
-            dim_in = 2048
-        else:
-            model_fun, dim_in = model_dict[name]
-            self.total_var = 0
-            self.encoder = model_fun()
+
+        model_fun, dim_in = model_dict[name]
+        self.total_var = 0
+        self.encoder = model_fun()
         self.proj = []
         self.n_heads = n_heads
         if head == 'linear':
             self.head = nn.Linear(dim_in, feat_dim)
         elif head == 'mlp':
             self.proj = nn.ModuleList()
-            if name == "be_resnet50":
+            for i in range(n_heads):
                 pro = nn.Sequential(
-                    BatchEnsembleLinear(dim_in, dim_in, num_models=4),
+                    nn.Linear(dim_in, dim_in),
                     nn.ReLU(inplace=True),
-                    BatchEnsembleLinear(dim_in, feat_dim, num_models=4)
+                    nn.Linear(dim_in, feat_dim)
                 )
                 self.proj.append(pro)
-            else:
-                for i in range(n_heads):
-                    pro = nn.Sequential(
-                        nn.Linear(dim_in, dim_in),
-                        nn.ReLU(inplace=True),
-                        nn.Linear(dim_in, feat_dim)
-                    )
-                    self.proj.append(pro)
 
         else:
             raise NotImplementedError(
@@ -226,74 +208,16 @@ class SupConResNet(nn.Module):
         return features, features_std
 
 
-
-
 class LinearClassifier(nn.Module):
     """Linear classifier"""
 
     def __init__(self, name='resnet50', num_classes=10):
         super(LinearClassifier, self).__init__()
-        if name == "be_resnet50":
-            self.encoder = BatchEnsembleResNet50(task_count=4, num_classes=10)
-            dim_in = 2048
-        elif name == "mcdrop_resnet50":
-            self.encoder = resnet50_dropout_torch(dropout_rate=0)
-            dim_in = 2048
-        else:
-            _, dim_in = model_dict[name]
+
+        _, dim_in = model_dict[name]
         self.fc = nn.Linear(dim_in, num_classes)
 
     def forward(self, features):
         return self.fc(features)
 
 
-"""
-f1 = self.encoder(x1)
-        feat1_1 = F.normalize(self.head1(f1), dim=1)
-        feat2_1 = F.normalize(self.head2(f1), dim=1)
-        feat3_1 = F.normalize(self.head3(f1), dim=1)
-        feat4_1 = F.normalize(self.head4(f1), dim=1)
-        feat5_1 = F.normalize(self.head5(f1), dim=1)
-        feat1 = torch.mean(torch.stack([feat1_1, feat2_1, feat3_1, feat4_1, feat5_1]), dim=0)
-        feat1_std = torch.sqrt(torch.var(torch.stack([feat1_1, feat2_1, feat3_1, feat4_1, feat5_1]), dim=0) + 0.0001)
-
-        # feat1 = torch.mean(torch.stack([feat1_1]), dim=0)
-        # feat1_std = torch.sqrt(torch.var(torch.stack([feat1_1]), dim=0) + 0.0001)
-        f2 = self.encoder(x2)
-        feat1_2 = F.normalize(self.head1(f2), dim=1)
-        feat2_2 = F.normalize(self.head2(f2), dim=1)
-        feat3_2 = F.normalize(self.head3(f2), dim=1)
-        feat4_2 = F.normalize(self.head4(f2), dim=1)
-        feat5_2 = F.normalize(self.head5(f2), dim=1)
-        feat2 = torch.mean(torch.stack([feat1_2, feat2_2, feat3_2, feat4_2, feat5_2]), dim=0)
-        feat2_std = torch.sqrt(torch.var(torch.stack([feat1_2, feat2_2, feat3_2, feat4_2, feat5_2]), dim=0) + 0.0001)
-        # feat2 = torch.mean(torch.stack([feat1_2]), dim=0)
-        # feat2_std = torch.sqrt(torch.var(torch.stack([feat1_2]), dim=0) + 0.0001)
-        features = torch.cat([feat1.unsqueeze(1), feat2.unsqueeze(1)], dim=1)
-        features_std = torch.cat([feat1_std.unsqueeze(1), feat2_std.unsqueeze(1)], dim=1)
-        self.head1 = nn.Sequential(
-                nn.Linear(dim_in, dim_in),
-                nn.ReLU(inplace=True),
-                nn.Linear(dim_in, feat_dim)
-            )
-            self.head2 = nn.Sequential(
-                nn.Linear(dim_in, dim_in),
-                nn.ReLU(inplace=True),
-                nn.Linear(dim_in, feat_dim)
-            )
-            self.head3 = nn.Sequential(
-                nn.Linear(dim_in, dim_in),
-                nn.ReLU(inplace=True),
-                nn.Linear(dim_in, feat_dim)
-            )
-            self.head4 = nn.Sequential(
-                nn.Linear(dim_in, dim_in),
-                nn.ReLU(inplace=True),
-                nn.Linear(dim_in, feat_dim)
-            )
-            self.head5 = nn.Sequential(
-                nn.Linear(dim_in, dim_in),
-                nn.ReLU(inplace=True),
-                nn.Linear(dim_in, feat_dim)
-            )
-"""

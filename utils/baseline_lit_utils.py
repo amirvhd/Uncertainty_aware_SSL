@@ -5,60 +5,21 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
-from utils.score_utils import calc_metrics_transformed
-from models.concatenate import MyEnsemble
-# from laplace import Laplace
-from Dataloader.dataloader import data_loader
+from utils.utils import calc_metrics_transformed
+
 from Train.linear_eval import set_model_linear
 
 logger = logging.getLogger(__name__)
 
 
-def set_model(model_name, n_cls, path):
-    model = SupConResNet(name=model_name)
-    criterion = torch.nn.CrossEntropyLoss()
-
-    classifier = LinearClassifier(name=model_name, num_classes=n_cls)
-
-    state_dict = torch.load(path)
-
-    if torch.cuda.is_available():
-        if torch.cuda.device_count() > 1:
-            model.encoder = torch.nn.DataParallel(model.encoder)
-        else:
-            new_state_dict = {}
-            for k, v in state_dict.items():
-                k = k.replace("module.", "")
-                new_state_dict[k] = v
-            state_dict = new_state_dict
-        model = model.cuda()
-        classifier = classifier.cuda()
-        criterion = criterion.cuda()
-        model.load_state_dict(state_dict)
-
-    return model, classifier, criterion
-
-
 class LitBaseline(pl.LightningModule):
-    def __init__(self, ind_name, linear_path, model_path, n_cls, out_dir, nh, LA=False):
+    def __init__(self, ind_name, linear_path, model_path, n_cls, out_dir, nh):
         super().__init__()
         # self.model_name = model_name
         self.ind_name = ind_name
-        self.LA = LA
         self.nh = nh
         model, classifier, criterion = set_model_linear("resnet50", n_cls, model_path, nh=self.nh)
         classifier.load_state_dict(torch.load(linear_path))
-
-        if LA:
-            linear_model_map = MyEnsemble(model.encoder, classifier).cuda().eval()
-            train_loader, val_loader, _, _ = data_loader()
-            la = Laplace(linear_model_map, 'classification',
-                         subset_of_weights='last_layer',
-                         hessian_structure='kron')
-
-            la.fit(train_loader)
-            la.optimize_prior_precision(method='CV', val_loader=val_loader)
-            self.model1 = la
 
         self.model = model
         self.classifier = classifier
@@ -96,29 +57,21 @@ class LitBaseline(pl.LightningModule):
         pass
 
     def forward(self, x):
-        if self.LA:
-            # self.model1.eval()
-            with torch.no_grad():
-                logits = self.model1(x)
-        else:
-            self.model.eval()
-            self.classifier.eval()
-            with torch.no_grad():
-                features = self.model.encoder(x)
-                logits = self.classifier(features)
+
+        self.model.eval()
+        self.classifier.eval()
+        with torch.no_grad():
+            features = self.model.encoder(x)
+            logits = self.classifier(features)
 
         return logits
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        if self.LA:
-            probs = self.forward(x)
-            logits = 0
-            loss = F.cross_entropy(probs, y)
-        else:
-            logits = self.forward(x)
-            probs = torch.nn.functional.softmax(logits, dim=-1)
-            loss = F.cross_entropy(logits, y)
+
+        logits = self.forward(x)
+        probs = torch.nn.functional.softmax(logits, dim=-1)
+        loss = F.cross_entropy(logits, y)
 
         y_hat = probs.argmax(dim=-1)
         is_correct = y_hat == y
@@ -136,12 +89,9 @@ class LitBaseline(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         x, y = batch
-        if self.LA:
-            probs = self.forward(x)
-            logits = 0
-        else:
-            logits = self.forward(x)
-            probs = torch.nn.functional.softmax(logits, dim=-1)
+
+        logits = self.forward(x)
+        probs = torch.nn.functional.softmax(logits, dim=-1)
         y_hat = probs.argmax(dim=-1)
         is_correct = y_hat == y
         output = {
