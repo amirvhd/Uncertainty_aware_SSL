@@ -5,34 +5,6 @@ import torch
 from utils.util import TwoCropTransform
 
 
-
-def generate_dataloader(data, name, transform=None):
-    if data is None:
-        return None
-    use_cuda = torch.cuda.is_available()
-    device = torch.device("cuda" if use_cuda else "cpu")
-    # Read image files to pytorch dataset using ImageFolder, a generic data
-    # loader where images are in format root/label/filename
-    # See https://pytorch.org/vision/stable/datasets.html
-    if transform is None:
-        dataset = datasets.ImageFolder(data, transform=transforms.ToTensor())
-    else:
-        dataset = datasets.ImageFolder(data, transform=transform)
-
-    # Set options for device
-    if use_cuda:
-        kwargs = {"pin_memory": True, "num_workers": 16}
-    else:
-        kwargs = {}
-
-    # Wrap image dataset (defined above) in dataloader
-    dataloader = DataLoader(dataset, batch_size=8,
-                            shuffle=(name == "train"),
-                            **kwargs)
-
-    return dataloader
-
-
 def data_loader(dataset="cifar10", batch_size=512, semi=False, semi_percent=10):
     if dataset == 'cifar10':
         mean = (0.4914, 0.4822, 0.4465)
@@ -46,7 +18,6 @@ def data_loader(dataset="cifar10", batch_size=512, semi=False, semi_percent=10):
     elif dataset == "svhn":
         mean = (0.4376821, 0.4437697, 0.47280442)
         std = (0.19803012, 0.20101562, 0.19703614)
-
 
     normalize = transforms.Normalize(mean=mean, std=std)
     train_transform = transforms.Compose([
@@ -84,7 +55,7 @@ def data_loader(dataset="cifar10", batch_size=512, semi=False, semi_percent=10):
         train = train_dataset
 
     train, val = random_split(train, [int(0.8 * len(train)),
-                                     len(train) - int(0.8 * len(train))], generator=torch.Generator().manual_seed(42))
+                                      len(train) - int(0.8 * len(train))], generator=torch.Generator().manual_seed(42))
 
     train_loader = DataLoader(train,
                               batch_size=batch_size,

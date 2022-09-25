@@ -1,14 +1,12 @@
 from __future__ import print_function
 
 import math
-import numpy as np
 import torch
 import torch.optim as optim
 import numpy as np
 from ood_metrics import calc_metrics
 from sklearn.metrics import roc_curve
 
-# from torchlars import LARS
 
 
 class TwoCropTransform:

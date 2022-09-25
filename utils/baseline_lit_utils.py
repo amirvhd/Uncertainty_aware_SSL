@@ -1,6 +1,5 @@
 import logging
 import os.path as osp
-from models.resnet_big import SupConResNet, LinearClassifier
 import numpy as np
 import pytorch_lightning as pl
 import torch
