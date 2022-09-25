@@ -64,30 +64,20 @@ python main_execute_method.py
 
 
 ## Acknowledgements
-This code is adapted based on the following links:
+Base Simclr adapted from following repository:
 
- - [Topic modeling](https://github.com/MaartenGr/BERTopic)
- - [Multi-label-Text-classification](https://curiousily.com/posts/multi-label-text-classification-with-bert-and-pytorch-lightning/)
- - [Image Segmentation](https://colab.research.google.com/github/qubvel/segmentation_models.pytorch/blob/master/examples/binary_segmentation_intro.ipynb#scrollTo=PeGCIYNlVx5y)
-
-
-
-## Feedback
-
-If you have any feedback, please reach out to us at A.vahidi@campus.lmu.de
-
-
-## Acknowledgements
-This code is adapted based on the following repositories:
-
- - [Simclr](https://github.com/HobbitLong/SupContrast)
- - [Out of disstribution detection](https://github.com/kobybibas/pnml_ood_detection)
- - [Laplace](https://github.com/AlexImmer/Laplace)
-
+ - [Simclr]([https://github.com/MaartenGr/BERTopic](https://github.com/HobbitLong/SupContrast))
+Out of distribution code adapted from following repository:
+ - [Out of distribution](https://github.com/kobybibas/pnml_ood_detection)
+Metrics for uncertainty analysis are taken from following repository:
+ - [Uncertainty_metrics]()
 
 
 
 ## Feedback
 
 If you have any feedback, please reach out to us at A.vahidi@campus.lmu.de
+
+
+
 
