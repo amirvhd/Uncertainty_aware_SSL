@@ -67,10 +67,14 @@ python main_execute_method.py
 Base Simclr adapted from following repository:
 
  - [Simclr]([https://github.com/MaartenGr/BERTopic](https://github.com/HobbitLong/SupContrast))
+
 Out of distribution code adapted from following repository:
+
  - [Out of distribution](https://github.com/kobybibas/pnml_ood_detection)
+
 Metrics for uncertainty analysis are taken from following repository:
- - [Uncertainty_metrics]()
+
+ - [Uncertainty_metrics](https://github.com/bicycleman15/KD-calibration/blob/f436583f4458c89971414e972686c55596d5950d/calibration_library/metrics.py)
 
 
 
