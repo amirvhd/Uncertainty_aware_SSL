@@ -1,4 +1,4 @@
-![Logo](https://blog.rwth-aachen.de/forschungsdaten/files/2019/09/BERD@NFDI-Logo.png)
+![Logo]()
 
 
 # 
@@ -66,7 +66,7 @@ python main_execute_method.py
 ## Acknowledgements
 Base Simclr adapted from following repository:
 
- - [Simclr]([https://github.com/MaartenGr/BERTopic](https://github.com/HobbitLong/SupContrast))
+ - [Simclr](https://github.com/MaartenGr/BERTopic](https://github.com/HobbitLong/SupContrast))
 
 Out of distribution code adapted from following repository:
 
