@@ -151,8 +151,6 @@ def evaluate(val_loader, model, classifier, opt):
             output = classifier(model.encoder(images))
             true_y.extend(labels.cpu())
             pred_y.extend(torch.argmax(output, dim=1).cpu())
-        #print(classification_report(true_y, pred_y, digits=3))
-        #print(balanced_accuracy_score(true_y, pred_y))
         return classification_report(true_y, pred_y)
 
 
