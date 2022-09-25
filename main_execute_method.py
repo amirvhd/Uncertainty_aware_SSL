@@ -1,16 +1,17 @@
 import os
 import time
 import argparse
-
+from utils.metrics import OELoss, SCELoss, TACELoss, ACELoss, ECELoss, MCELoss
 import pandas as pd
 import pytorch_lightning as pl
 import torch
-
+import torch.distributions as dists
 from Dataloader.dataset_utils import get_data_loaders
 from utils.baseline_lit_utils import LitBaseline
 from utils.method_utils import execute_baseline
 from Dataloader.dataset_c_un import get_data_loaders_c
 from Dataloader.label_un_data import download
+import numpy as np
 
 
 def parse_option():
@@ -102,29 +103,35 @@ def run_experiment():
             LA = True
         else:
             LA = False
-        linear_model_path = "./saved_models/{}_models_ensemble/linear_models/simclr800_linear_{}_epoch100_1heads_0.pt".format(opt.dataset,
-            i)
-        simclr_path = "./saved_models/{}_models_ensemble/linear_models/simclr800_encoder_{}_epoch100_1heads_0.pt".format(opt.dataset,
-            i)
-        # linear_model_path = './saved_models/{}_experiments/linear_models/simclr800_linear_{}_epoch100_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
+        # linear_model_path = "./saved_models/{}_models_ensemble/linear_models/simclr800_linear_{}_epoch100_1heads_0.pt".format(
         #     opt.dataset,
-        #     i,
-        #     opt.nh,
-        #     opt.lamda1,
-        #     opt.lamda2, dl)
-        # simclr_path = './saved_models/{}_experiments/linear_models/simclr800_encoder_{}_epoch100_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
+        #     i)
+        # simclr_path = "./saved_models/{}_models_ensemble/linear_models/simclr800_encoder_{}_epoch100_1heads_0.pt".format(
         #     opt.dataset,
-        #     i,
-        #     opt.nh,
-        #     opt.lamda1,
-        #     opt.lamda2, dl)
+        #     i)
+        linear_model_path = './saved_models/{}_experiments/linear_models/simclr800_linear_{}_epoch100_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
+            opt.dataset,
+            i,
+            opt.nh,
+            opt.lamda1,
+            opt.lamda2, dl)
+        simclr_path = './saved_models/{}_experiments/linear_models/simclr800_encoder_{}_epoch100_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
+            opt.dataset,
+            i,
+            opt.nh,
+            opt.lamda1,
+            opt.lamda2, dl)
         lit_model_h = LitBaseline(opt.dataset, linear_model_path, simclr_path, n_cls, out_dir, opt.nh, LA)
         baseline_df = baseline_df.append(execute_baseline(opt, lit_model_h, trainer, loaders_dict))
     ens = baseline_df.groupby(['ood_name']).mean()
+
     print(ens)
-    os.makedirs("./csv_results", exist_ok=True)
-    ens.to_csv("./csv_results/{}_c_{}heads_lamda1{}_lamda2{}_{}.csv".format(opt.dataset, opt.nh, opt.lamda1,
-                                                                            opt.lamda2, dl))
+    if opt.c:
+        os.makedirs("./csv_results", exist_ok=True)
+        ens.to_csv("./csv_results/ens.csv")
+        # os.makedirs("./csv_results/mean", exist_ok=True)
+        # df.to_csv("./csv_results/{}_c_{}heads_lamda1{}_lamda2{}_{}.csv".format(opt.dataset, opt.nh, opt.lamda1,
+        #                                                                        opt.lamda2, dl))
     print("Finish in {:.2f} sec. out_dir={}".format(time.time() - t0, out_dir))
 
 

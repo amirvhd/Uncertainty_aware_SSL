@@ -8,7 +8,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-
+from models.batchensemble_resnet import BatchEnsembleResNet50, BatchEnsembleResNet34
+from models.batchensemble_layers import BatchEnsembleLinear
+from models.resent50_dropout import resnet50_dropout_torch
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -146,6 +148,7 @@ model_dict = {
     'resnet34': [resnet34, 512],
     'resnet50': [resnet50, 2048],
     'resnet101': [resnet101, 2048],
+    'be_resnet50': [BatchEnsembleResNet50(task_count=4, num_classes=10), 2048]
 }
 
 
@@ -169,23 +172,37 @@ class SupConResNet(nn.Module):
 
     def __init__(self, name='resnet50', head='mlp', feat_dim=128, n_heads=5):
         super(SupConResNet, self).__init__()
-        model_fun, dim_in = model_dict[name]
-        self.total_var = 0
-        self.encoder = model_fun()
+        if name == "be_resnet50":
+            self.encoder = BatchEnsembleResNet50(task_count=4, num_classes=10)
+            dim_in = 2048
+        elif name == "mcdrop_resnet50":
+            self.encoder = resnet50_dropout_torch(dropout_rate=0.2)
+            dim_in = 2048
+        else:
+            model_fun, dim_in = model_dict[name]
+            self.total_var = 0
+            self.encoder = model_fun()
         self.proj = []
         self.n_heads = n_heads
         if head == 'linear':
             self.head = nn.Linear(dim_in, feat_dim)
         elif head == 'mlp':
             self.proj = nn.ModuleList()
-            for i in range(n_heads):
-
+            if name == "be_resnet50":
                 pro = nn.Sequential(
-                    nn.Linear(dim_in, dim_in),
+                    BatchEnsembleLinear(dim_in, dim_in, num_models=4),
                     nn.ReLU(inplace=True),
-                    nn.Linear(dim_in, feat_dim)
+                    BatchEnsembleLinear(dim_in, feat_dim, num_models=4)
                 )
                 self.proj.append(pro)
+            else:
+                for i in range(n_heads):
+                    pro = nn.Sequential(
+                        nn.Linear(dim_in, dim_in),
+                        nn.ReLU(inplace=True),
+                        nn.Linear(dim_in, feat_dim)
+                    )
+                    self.proj.append(pro)
 
         else:
             raise NotImplementedError(
@@ -209,17 +226,6 @@ class SupConResNet(nn.Module):
         return features, features_std
 
 
-class SupCEResNet(nn.Module):
-    """encoder + classifier"""
-
-    def __init__(self, name='resnet50', num_classes=10):
-        super(SupCEResNet, self).__init__()
-        model_fun, dim_in = model_dict[name]
-        self.encoder = model_fun()
-        self.fc = nn.Linear(dim_in, num_classes)
-
-    def forward(self, x):
-        return self.fc(self.encoder(x))
 
 
 class LinearClassifier(nn.Module):
@@ -227,8 +233,15 @@ class LinearClassifier(nn.Module):
 
     def __init__(self, name='resnet50', num_classes=10):
         super(LinearClassifier, self).__init__()
-        _, feat_dim = model_dict[name]
-        self.fc = nn.Linear(feat_dim, num_classes)
+        if name == "be_resnet50":
+            self.encoder = BatchEnsembleResNet50(task_count=4, num_classes=10)
+            dim_in = 2048
+        elif name == "mcdrop_resnet50":
+            self.encoder = resnet50_dropout_torch(dropout_rate=0)
+            dim_in = 2048
+        else:
+            _, dim_in = model_dict[name]
+        self.fc = nn.Linear(dim_in, num_classes)
 
     def forward(self, features):
         return self.fc(features)

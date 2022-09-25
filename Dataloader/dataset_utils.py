@@ -2,7 +2,7 @@ import logging
 from glob import glob
 from os import path as osp
 from os.path import join as osj
-
+from Dataloader.cifar10h import CIFAR10H
 import numpy as np
 import torch
 from PIL import Image
@@ -224,9 +224,9 @@ def get_data_loaders(
     trainloader_svhn, testloader_svhn = get_svhn_loaders(
         get_data_transform("svhn"), root, batch_size, n_workers
     )
-    # trainloader_isic, testloader_isic = get_isic_loaders(
-    #    get_data_transform("isic"), root, batch_size, n_workers
-    # )
+    trainloader_cifar10h, testloader_cifar10h = get_cifar10h_loaders(
+       get_data_transform("cifar10"), root, batch_size, n_workers
+    )
     # Load out of distribution datasets
     loaders_dict = {}
     for name in testsets_names:
@@ -262,7 +262,7 @@ def get_data_loaders(
         loaders_dict["svhn"] = testloader_svhn
         loaders_dict["cifar10"] = testloader_cifar10
         loaders_dict["cifar100"] = testloader_cifar100
-
+        loaders_dict["cifar10h"] = testloader_cifar10h
 
     elif trainset_name == "isic":
         loaders_dict["trainset"] = trainloader_isic
@@ -320,6 +320,48 @@ def get_cifar10_loaders(
     )
     return trainloader, testloader
 
+def get_cifar10h_loaders(
+        data_transform,
+        data_dir: str = "../../DATA2/",
+        batch_size: int = 128,
+        num_workers: int = 4,
+):
+    """
+    create train and test pytorch dataloaders for CIFAR10 dataset
+    :param data_dir: the folder that will contain the data
+    :param batch_size: the size of the batch for test and train loaders
+    :param num_workers: number of cpu workers which loads the GPU with the dataset
+    :return: train and test loaders along with mapping between labels and class names
+    """
+    trainset = datasets.CIFAR10(
+        root=data_dir,
+        train=True,
+        download=True,
+        transform=data_transform,
+    )
+    trainloader = data.DataLoader(
+        trainset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        persistent_workers=True,
+        drop_last=True,
+        pin_memory=False,
+    )
+
+    testset = CIFAR10H(
+        root=data_dir, train=False, download=True, transform=data_transform
+    )
+    testloader = data.DataLoader(
+        testset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        persistent_workers=True,
+        drop_last=True,
+        pin_memory=False,
+    )
+    return trainloader, testloader
 
 def get_cifar100_loaders(
         data_transform,

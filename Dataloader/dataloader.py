@@ -1,12 +1,15 @@
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, random_split, WeightedRandomSampler
 import torchvision.transforms as transforms
 from torchvision import datasets
 import torch
-
+import os
 from utils.util import TwoCropTransform
 from utils.isic import set_path
-# from isicDataset import ISICDataset
+from Dataloader.isicDataset import ISICDataset
 import numpy as np
+from Dataloader.cifar10h import CIFAR10H
+from Dataloader.skin import SKIN
+from torchvision.datasets.utils import download_file_from_google_drive
 
 
 def generate_dataloader(data, name, transform=None):
@@ -43,24 +46,36 @@ def data_loader(dataset="cifar10", batch_size=512, semi=False, semi_percent=10):
     elif dataset == 'cifar100':
         mean = (0.5071, 0.4867, 0.4408)
         std = (0.2675, 0.2565, 0.2761)
+    elif dataset == 'cifar10h':
+        mean = (0.4914, 0.4822, 0.4465)
+        std = (0.2023, 0.1994, 0.2010)
     elif dataset == "svhn":
         mean = (0.4376821, 0.4437697, 0.47280442)
         std = (0.19803012, 0.20101562, 0.19703614)
     elif dataset == "isic":
         mean = (0.485, 0.456, 0.406)
         std = (0.229, 0.224, 0.225)
-    normalize = transforms.Normalize(mean=mean, std=std)
-    train_transform = transforms.Compose([
-        transforms.RandomResizedCrop(size=32, scale=(0.2, 1.)),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        normalize,
-    ])
-
+    if dataset == "isic":
+        normalize = transforms.Normalize(mean=mean, std=std)
+        train_transform = transforms.Compose([
+            transforms.RandomResizedCrop(size=120, scale=(0.2, 1.)),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            normalize,
+        ])
+    else:
+        normalize = transforms.Normalize(mean=mean, std=std)
+        train_transform = transforms.Compose([
+            transforms.RandomResizedCrop(size=32, scale=(0.2, 1.)),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            normalize,
+        ])
     val_transform = transforms.Compose([
         transforms.ToTensor(),
         normalize,
     ])
+    sampler = None
     # datasets
     if dataset == "cifar10":
         train_dataset = datasets.CIFAR10(root='../../DATA2/', train=True, download=True, transform=train_transform)
@@ -77,13 +92,16 @@ def data_loader(dataset="cifar10", batch_size=512, semi=False, semi_percent=10):
             root='../../DATA2/', split="test", download=True, transform=val_transform
         )
     elif dataset == "isic":
-        train_img_path, train_class_path, val_img_path, val_class_path, test_img = set_path()
+        train_img_path, train_class_path, val_img_path, val_class_path, test_img = set_path('../../DATA2/')
         train_dataset = ISICDataset(train_img_path, transform=train_transform,
                                     csv_path=train_class_path,
                                     test=False)
         test_dataset = ISICDataset(val_img_path, transform=train_transform,
                                    csv_path=val_class_path,
                                    test=False)
+    elif dataset == "cifar10h":
+        train_dataset = CIFAR10H(root='../../DATA2/', train=True, download=True, transform=train_transform)
+        test_dataset = CIFAR10H(root='../../DATA2/', train=False, download=True, transform=val_transform)
     if semi:
         per = semi_percent / 100
         x = int(per * len(train_dataset))
@@ -93,16 +111,23 @@ def data_loader(dataset="cifar10", batch_size=512, semi=False, semi_percent=10):
         train = train_dataset
 
     train, val = random_split(train, [int(0.8 * len(train)),
-                                      len(train) - int(0.8 * len(train))], generator=torch.Generator().manual_seed(42))
-
+                                     len(train) - int(0.8 * len(train))], generator=torch.Generator().manual_seed(42))
+    if dataset == "isic":
+        target = np.array(train_dataset.targets)[:, 1:].argmax(1)
+        class_sample_count = np.unique(target, return_counts=True)[1]
+        weight = 1. / class_sample_count
+        samples_weight = weight[target]
+        samples_weight = torch.from_numpy(samples_weight)
+        sampler = WeightedRandomSampler(samples_weight, len(samples_weight))
     train_loader = DataLoader(train,
                               batch_size=batch_size,
                               shuffle=True,
                               num_workers=16,
-                              drop_last=False)
+                              drop_last=False
+                              )
     val_loader = DataLoader(val,
                             batch_size=batch_size,
-                            shuffle=True,
+                            shuffle=False,
                             num_workers=16,
                             drop_last=False)
 
@@ -237,6 +262,11 @@ def set_loader_simclr(dataset, batch_size, num_workers, data_dir='../../DATA2/',
     elif dataset == "isic":
         mean = (0.485, 0.456, 0.406)
         std = (0.229, 0.224, 0.225)
+        size = 120
+    elif dataset == "skin":
+        mean = (0.485, 0.456, 0.406)
+        std = (0.229, 0.224, 0.225)
+        size = 224
     else:
         raise ValueError('dataset not supported: {}'.format(dataset))
     normalize = transforms.Normalize(mean=mean, std=std)
@@ -264,6 +294,15 @@ def set_loader_simclr(dataset, batch_size, num_workers, data_dir='../../DATA2/',
         train_dataset = datasets.SVHN(
             root=data_dir, split="train", download=True, transform=TwoCropTransform(train_transform)
         )
+    elif dataset == "isic":
+        train_img_path, train_class_path, val_img_path, val_class_path, test_img = set_path(data_dir)
+        train_dataset = ISICDataset(train_img_path, transform=TwoCropTransform(train_transform),
+                                    csv_path=train_class_path,
+                                    test=False)
+    elif dataset == "skin":
+        download_file_from_google_drive(file_id="1KNECNxje-PmijAs0huNaAPJZOXrZURqP"
+                                        , root=data_dir, filename="toxic_comments.csv")
+        train_dataset = SKIN(root=data_dir, train=True, transform=TwoCropTransform(train_transform))
     else:
         raise ValueError(dataset)
 

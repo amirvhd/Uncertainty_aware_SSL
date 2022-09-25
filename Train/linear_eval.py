@@ -6,7 +6,7 @@ from utils.util import warmup_learning_rate
 from models.resnet_big import SupConResNet, LinearClassifier
 import torch.backends.cudnn as cudnn
 from torch import nn
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, balanced_accuracy_score
 
 
 class MyDataParallel(torch.nn.DataParallel):
@@ -20,7 +20,6 @@ class MyDataParallel(torch.nn.DataParallel):
 def set_model_linear(model_name, number_cls, path, nh=5):
     model = SupConResNet(name=model_name, n_heads=nh)
     criterion = torch.nn.CrossEntropyLoss()
-
     classifier = LinearClassifier(name=model_name, num_classes=number_cls)
 
     ckpt = torch.load(path)
@@ -54,7 +53,7 @@ def train(train_loader, model, classifier, criterion, optimizer, epoch, opt):
     data_time = AverageMeter()
     losses = AverageMeter()
     top1 = AverageMeter()
-    schedular= torch.optim.lr_scheduler. ExponentialLR(optimizer, gamma=0.9)
+    schedular = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
     end = time.time()
     for idx, (images, labels) in enumerate(train_loader):
         data_time.update(time.time() - end)
@@ -65,7 +64,7 @@ def train(train_loader, model, classifier, criterion, optimizer, epoch, opt):
         if opt.pu:
             images = images.reshape(images.shape[0], 3, 32, 32).float()
         # warm-up learning rate
-        #warmup_learning_rate(opt, epoch, idx, len(train_loader), optimizer)
+        # warmup_learning_rate(opt, epoch, idx, len(train_loader), optimizer)
 
         # compute loss
         with torch.no_grad():
@@ -153,9 +152,9 @@ def evaluate(val_loader, model, classifier, opt):
             output = classifier(model.encoder(images))
             true_y.extend(labels.cpu())
             pred_y.extend(torch.argmax(output, dim=1).cpu())
-        print(classification_report(true_y, pred_y, digits=3))
-
-        return
+        #print(classification_report(true_y, pred_y, digits=3))
+        #print(balanced_accuracy_score(true_y, pred_y))
+        return classification_report(true_y, pred_y)
 
 
 def predict(dataloader, model, laplace=False):
@@ -166,7 +165,7 @@ def predict(dataloader, model, laplace=False):
             if laplace:
                 py.append(model(x.to(device)))
             else:
-                #py.append(torch.softmax(model(x.to(device)), dim=-1))
+                # py.append(torch.softmax(model(x.to(device)), dim=-1))
                 py.append(model(x.to(device)))
         res = torch.cat(py).cpu().detach().numpy()
 

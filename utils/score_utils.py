@@ -1,10 +1,12 @@
 import os.path as osp
 import random
-
+import torch.distributions as dists
 import numpy as np
 import numpy.linalg as npl
 from ood_metrics import calc_metrics
 from sklearn.metrics import roc_curve
+from utils.metrics import OELoss, SCELoss, TACELoss, ACELoss, ECELoss, MCELoss
+import torch
 
 
 def softmax(x):
@@ -124,7 +126,7 @@ def calc_metrics_transformed(ind_score: np.ndarray, ood_score: np.ndarray) -> di
 
     metric_dict_transformed = {
         "AUROC": 100 * metric_dict["auroc"],
-        "TNR at TPR 95%": 100 * (1 - metric_dict["fpr_at_95_tpr"]),
-        "Detection Acc.": 100 * 0.5 * (tpr + 1 - fpr).max(),
+        #    "TNR at TPR 95%": 100 * (1 - metric_dict["fpr_at_95_tpr"]),
+        #   "Detection Acc.": 100 * 0.5 * (tpr + 1 - fpr).max(),
     }
     return metric_dict_transformed

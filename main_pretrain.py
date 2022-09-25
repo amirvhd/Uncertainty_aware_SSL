@@ -57,7 +57,7 @@ def parse_option():
     # model dataset
     parser.add_argument('--model', type=str, default='resnet50')
     parser.add_argument('--dataset', type=str, default='cifar10',
-                        choices=['cifar10', 'cifar100', 'svhn', 'isic'], help='dataset')
+                        choices=['cifar10', 'cifar100', 'svhn', 'isic', "skin"], help='dataset')
     parser.add_argument('--mean', type=str, help='mean of dataset in path in form of str tuple')
     parser.add_argument('--std', type=str, help='std of dataset in path in form of str tuple')
     parser.add_argument('--data_folder', type=str, default=None, help='path to custom dataset')
@@ -68,7 +68,7 @@ def parse_option():
                         help='temperature for loss function')
     parser.add_argument('--nh', type=int, default=1,
                         help='number of heads')
-    parser.add_argument('--lamda1', type=float, default=1,
+    parser.add_argument('--lamda1', type=float, default=0,
                         help='number of heads')
     parser.add_argument('--lamda2', type=float, default=0.1,
                         help='number of heads')

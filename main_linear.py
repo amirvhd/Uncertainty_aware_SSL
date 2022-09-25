@@ -14,7 +14,7 @@ from utils.util import set_optimizer
 from Train.linear_eval import set_model_linear, train, evaluate, predict, validate
 # import tensorboard_logger as tb_logger
 from torch.utils.tensorboard import SummaryWriter
-
+from sklearn.metrics import balanced_accuracy_score
 try:
     import apex
     from apex import amp, optimizers
@@ -81,7 +81,7 @@ def parse_option():
                         help='number of ensemble models')
     parser.add_argument('--nh', type=int, default=1,
                         help='number of heads')
-    parser.add_argument('--lamda1', type=float, default=1,
+    parser.add_argument('--lamda1', type=float, default=0,
                         help='number of heads')
     parser.add_argument('--lamda2', type=float, default=0.1,
                         help='number of heads')
@@ -118,7 +118,10 @@ def parse_option():
         opt.n_cls = 7
     else:
         raise ValueError('dataset not supported: {}'.format(opt.dataset))
-    opt.model_path = './saved_models/{}_experiments/linear_models'.format(opt.dataset)
+    if opt.semi:
+        opt.model_path = './saved_models/{}_models_ensemble/semi_model/'.format(opt.dataset)
+    else:
+        opt.model_path = './saved_models/{}_experiments/linear_models'.format(opt.dataset)
     if not os.path.isdir(opt.model_path):
         os.makedirs(opt.model_path)
 
@@ -134,7 +137,8 @@ def main():
         dl = False
     writer = SummaryWriter(log_dir=opt.tb_path)
     # build data loader
-    train_loader, val_loader, test_loader, _ = data_loader(dataset=opt.dataset, batch_size=opt.batch_size)
+    train_loader, val_loader, test_loader, _ = data_loader(dataset=opt.dataset, batch_size=opt.batch_size,
+                                                           semi=opt.semi, semi_percent=opt.semi_percent)
     # train_loader, val_loader = set_loader(dataset=opt.dataset, batch_size=opt.batch_size, num_workers=opt.num_workers)
     ensemble = opt.ensemble
     for i in range(ensemble):
@@ -144,11 +148,15 @@ def main():
         torch.cuda.manual_seed(i)
         opt.ckpt = (
             './saved_models/{}_experiments/simclr_{}_{}_epoch800_{}heads_lamda1{}_lamda2{}_{}.pt'.format(opt.dataset,
-                                                                                                         opt.dataset, i,
-                                                                                                         opt.nh,
-                                                                                                         opt.lamda1,
-                                                                                                         opt.lamda2,
-                                                                                                         dl))
+                                                                                                           opt.dataset,
+                                                                                                           i,
+                                                                                                           opt.nh,
+                                                                                                           opt.lamda1,
+                                                                                                           opt.lamda2,
+                                                                                                           dl))
+        # opt.ckpt = "./saved_models/{}_models_ensemble/linear_models/simclr800_encoder_{}_epoch100_1heads_0.pt".format(
+        #     opt.dataset,
+        #     i)
         # build model and criterion
         model, classifier, criterion = set_model_linear(model_name=opt.model, number_cls=opt.n_cls, path=opt.ckpt,
                                                         nh=opt.nh)
@@ -175,9 +183,9 @@ def main():
             val_loss, val_acc = validate(val_loader, model, classifier, criterion, opt)
             writer.add_scalar("Loss/train", loss, epoch)
             writer.add_scalar('train/learning_rate', optimizer.param_groups[0]['lr'], epoch)
-            writer.add_scalar('accuracy', val_acc, epoch)
-            writer.add_scalar("Loss/eval", val_loss, epoch)
-
+           # writer.add_scalar('accuracy', val_acc, epoch)
+            #writer.add_scalar("Loss/eval", val_loss, epoch)
+            # val_acc = evaluate(test_loader, model, classifier, opt)
             if val_acc > best_acc:
                 best_epoch = epoch
                 best_acc = val_acc
@@ -193,13 +201,21 @@ def main():
         if opt.semi:
 
             torch.save(best_classifier.state_dict(),
-                       './saved_models/{}_models/simclr_linear_{}_epoch{}_percent{}.pt'.format(opt.dataset, i,
-                                                                                               opt.epochs,
-                                                                                               opt.semi_percent))
+                       './saved_models/{}_models_ensemble/semi_model/simclr_linear_{}_epoch{}_percent{}_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
+                           opt.dataset, i,
+                           opt.epochs,
+                           opt.semi_percent,
+                           opt.nh,
+                           opt.lamda1,
+                           opt.lamda2, dl))
             torch.save(model.state_dict(),
-                       './saved_models/{}_models/simclr_encoder_{}_epoch{}_percent{}.pt'.format(opt.dataset, i,
-                                                                                                opt.epochs,
-                                                                                                opt.semi_percent))
+                       './saved_models/{}_models_ensemble/semi_model/simclr_encoder_{}_epoch{}_percent{}_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
+                           opt.dataset, i,
+                           opt.epochs,
+                           opt.semi_percent,
+                           opt.nh,
+                           opt.lamda1,
+                           opt.lamda2, dl))
         else:
             torch.save(best_classifier.state_dict(),
                        './saved_models/{}_experiments/linear_models/simclr800_linear_{}_epoch{}_{}heads_lamda1{}_lamda2{}_{}.pt'.format(

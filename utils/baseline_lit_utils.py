@@ -148,15 +148,17 @@ class LitBaseline(pl.LightningModule):
             "probs": probs,
             "is_correct": is_correct,
             "logits": logits,
+            "target": y
         }
         return output
 
     def test_epoch_end(self, outputs):
         probs = torch.vstack([out["probs"] for out in outputs])
+        logits = torch.vstack([out["logits"] for out in outputs])
         acc = torch.hstack([out["is_correct"] for out in outputs]).float().mean() * 100
         # Compute the normalization factor
         max_probs = torch.max(probs, dim=-1).values.cpu().numpy()
-
+        targets = torch.cat([out["target"] for out in outputs])
         if self.is_ind:
             print("\nValidation set acc {:.2f}%".format(acc))
             # Store IND scores
@@ -164,7 +166,6 @@ class LitBaseline(pl.LightningModule):
         else:
             # Run evaluation on the OOD set
             self.baseline_res = calc_metrics_transformed(self.ind_max_probs, max_probs)
-
         if self.is_save_scores is True:
             np.savetxt(
                 osp.join(self.out_dir, f"{self.ood_name}_baseline.txt"), max_probs

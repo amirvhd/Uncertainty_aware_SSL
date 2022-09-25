@@ -76,3 +76,6 @@ def set_model(model_name, temperature, syncBN=False, lamda1=1, lamda2=0.1, dl=Fa
         cudnn.benchmark = True
 
     return model, criterion
+
+
+
