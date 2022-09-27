@@ -11,7 +11,7 @@ from utils.metrics import OELoss, SCELoss, TACELoss, ACELoss, ECELoss, MCELoss
 def parse_option():
     parser = argparse.ArgumentParser('argument for training')
     parser.add_argument('--dataset', type=str, default='cifar10',
-                        choices=['cifar10', 'cifar100', 'svhn', 'isic', 'cifar10h', 'cifar10c'], help='dataset')
+                        choices=['cifar10', 'cifar100', 'svhn'], help='dataset')
     parser.add_argument('--model_path', type=str,
                         default='t', help='model path')
     parser.add_argument('--classifier_path', type=str,
