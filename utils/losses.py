@@ -1,4 +1,3 @@
-
 from __future__ import print_function
 
 import torch
@@ -9,14 +8,13 @@ import torch.nn.functional as F
 class UALoss(nn.Module):
 
     def __init__(self, temperature=0.07, contrast_mode='all',
-                 base_temperature=0.07, lamda1=1, lamda2=0.1, dl=False, batch_size=512):
+                 base_temperature=0.07, lamda1=1, lamda2=0.1, batch_size=512):
         super(UALoss, self).__init__()
         self.temperature = temperature
         self.contrast_mode = contrast_mode
         self.base_temperature = base_temperature
         self.lamda1 = lamda1
         self.lamda2 = lamda2
-        self.dl = dl
         self.batch_size = batch_size
 
     def forward(self, features, features_std, epochs):
@@ -79,16 +77,13 @@ class UALoss(nn.Module):
         loss = - (self.temperature / self.base_temperature) * mean_log_prob_pos
         # uncertainty loss
         std_loss1 = torch.sum(F.relu(self.lamda2 - features_std)) / (2 * self.batch_size)
-        std_loss2 = torch.sum(F.relu(features_std)) / (2 * self.batch_size)
+        std_loss2 = torch.sum(features_std) / (2 * self.batch_size)
         # print(std_loss)
         # nt xnet loss
         loss = loss.view(anchor_count, batch_size).mean()
 
         if self.lamda1 > 0:
-            if self.dl:
-                total_loss = std_loss1 * self.lamda1 + loss + std_loss2
-            else:
-                total_loss = std_loss1 * self.lamda1 + loss
+            total_loss = std_loss1 * self.lamda1 + loss
         else:
             total_loss = loss
 

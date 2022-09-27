@@ -26,16 +26,14 @@ def parse_option():
                         help='number of heads')
     parser.add_argument('--lamda2', type=float, default=0.1,
                         help='number of heads')
-    parser.add_argument('--dl', action='store_true',
-                        help='using cosine annealing')
+
     parser.add_argument('--ensemble', type=int, default=1,
                         help='number of ensemble models')
     opt = parser.parse_args()
     return opt
 
 
-def ensemble(n, nh, lamda1, lamda2, dataset, targets, n_cls, test_loader, dl=False, semi=False, semi_percent=10,
-             model_dir=".", classifier_dir="."):
+def ensemble(n, nh, targets, n_cls, test_loader, semi=False, model_dir=".", classifier_dir="."):
     probs_ensemble2_model = []
     if semi == True:
         for i in range(n):
@@ -103,17 +101,12 @@ def train():
         smi = True
     else:
         smi = False
-    if opt.dl:
-        dl = True
-    else:
-        dl = False
+
 
     train_loader, val_loader, test_loader, targets = data_loader(opt.dataset, batch_size=128, semi=smi,
                                                                  semi_percent=opt.semi_percent)
 
-    ensemble(opt.ensemble, opt.nh, opt.lamda1, opt.lamda2, opt.dataset, targets, n_cls, test_loader, dl, smi,
-             opt.semi_percent,
-             opt.model_path,opt.classifier_path)
+    ensemble(opt.ensemble, targets, n_cls, test_loader, smi, opt.model_path,opt.classifier_path)
 
 
 if __name__ == "__main__":

@@ -39,8 +39,7 @@ def parse_option():
                         help='number of heads')
     parser.add_argument('--lamda2', type=float, default=0.1,
                         help='number of heads')
-    parser.add_argument('--dl', action='store_true',
-                        help='using cosine annealing')
+
     opt = parser.parse_args()
     return opt
 
@@ -55,10 +54,6 @@ def run_experiment():
         dev_run = True
     else:
         dev_run = False
-    if opt.dl:
-        dl = True
-    else:
-        dl = False
     # Initialize trainer
     trainer = pl.Trainer(
         gpus=1 if torch.cuda.is_available() else 0,
@@ -107,9 +102,7 @@ def run_experiment():
     if opt.c:
         os.makedirs("./csv_results", exist_ok=True)
         ens.to_csv("./csv_results/ens.csv")
-        # os.makedirs("./csv_results/mean", exist_ok=True)
-        # df.to_csv("./csv_results/{}_c_{}heads_lamda1{}_lamda2{}_{}.csv".format(opt.dataset, opt.nh, opt.lamda1,
-        #                                                                        opt.lamda2, dl))
+
     print("Finish in {:.2f} sec. out_dir={}".format(time.time() - t0, out_dir))
 
 

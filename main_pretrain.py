@@ -61,8 +61,7 @@ def parse_option():
                         help='number of heads')
     parser.add_argument('--lamda2', type=float, default=0.1,
                         help='number of heads')
-    parser.add_argument('--dl', action='store_true',
-                        help='using cosine annealing')
+
     # other setting
     parser.add_argument('--cosine', action='store_true',
                         help='using cosine annealing')
@@ -97,10 +96,7 @@ def parse_option():
 
 def main():
     opt = parse_option()
-    if opt.dl:
-        dl = True
-    else:
-        dl = False
+
     # build data loader
     train_loader = set_loader_simclr(dataset=opt.dataset, batch_size=opt.batch_size, num_workers=opt.num_workers,
                                      size=opt.size)
@@ -109,7 +105,7 @@ def main():
         torch.manual_seed(i)
         torch.cuda.manual_seed(i)
         model, criterion = set_model(model_name=opt.model, temperature=opt.temp, syncBN=opt.syncBN, lamda1=opt.lamda1,
-                                     lamda2=opt.lamda2, dl=dl,
+                                     lamda2=opt.lamda2,
                                      batch_size=opt.batch_size, nh=opt.nh)
 
         # build optimizer
@@ -142,12 +138,12 @@ def main():
         loss_res = pd.DataFrame({"total_loss": l1, "stdloss1": l2, "stdloss2": l3})
         os.makedirs("./csv_loss", exist_ok=True)
         loss_res.to_csv(
-            "./csv_loss/{}_c_{}heads_lamda1{}_lamda2{}_{}.csv".format(opt.dataset, opt.nh, opt.lamda1, opt.lamda2, dl))
+            "./csv_loss/{}_c_{}heads_lamda1{}_lamda2{}.csv".format(opt.dataset, opt.nh, opt.lamda1, opt.lamda2))
         save_file = os.path.join(
             opt.model_path,
-            'simclr_{}_{}_epoch{}_{}heads_lamda1{}_lamda2{}_{}.pt'.format(opt.dataset, i, opt.epochs, opt.nh,
+            'simclr_{}_{}_epoch{}_{}heads_lamda1{}_lamda2{}.pt'.format(opt.dataset, i, opt.epochs, opt.nh,
                                                                           opt.lamda1,
-                                                                          opt.lamda2, dl))
+                                                                          opt.lamda2))
         torch.save(model.state_dict(), save_file)
 
 

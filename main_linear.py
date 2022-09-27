@@ -75,8 +75,7 @@ def parse_option():
                         help='number of heads')
     parser.add_argument('--lamda2', type=float, default=0.1,
                         help='number of heads')
-    parser.add_argument('--dl', action='store_true',
-                        help='using cosine annealing')
+
     opt = parser.parse_args()
 
     iterations = opt.lr_decay_epochs.split(',')
@@ -114,10 +113,7 @@ def parse_option():
 
 def main():
     opt = parse_option()
-    if opt.dl:
-        dl = True
-    else:
-        dl = False
+
     writer = SummaryWriter(log_dir=opt.tb_path)
     # build data loader
     train_loader, val_loader, test_loader, _ = data_loader(dataset=opt.dataset, batch_size=opt.batch_size,
@@ -169,26 +165,26 @@ def main():
         if opt.semi:
             opt.classifier_path = os.path.join(
                 opt.classifier_path,
-                './saved_models/{}_experiments/semi_model/simclr_linear_{}_epoch{}_percent{}_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
+                './saved_models/{}_experiments/semi_model/simclr_linear_{}_epoch{}_percent{}_{}heads_lamda1{}_lamda2{}.pt'.format(
                            opt.dataset, i,
                            opt.epochs,
                            opt.semi_percent,
                            opt.nh,
                            opt.lamda1,
-                           opt.lamda2, dl))
+                           opt.lamda2))
             torch.save(best_classifier.state_dict(),
                        opt.classifier_path)
 
         else:
             opt.classifier_path = os.path.join(
                 opt.classifier_path,
-                './saved_models/{}_experiments/linear_models/simclr800_linear_{}_epoch{}_{}heads_lamda1{}_lamda2{}_{}_M5.pt'.format(
+                './saved_models/{}_experiments/linear_models/simclr800_linear_{}_epoch{}_{}heads_lamda1{}_lamda2{}.pt'.format(
                            opt.dataset,
                            i,
                            opt.epochs,
                            opt.nh,
                            opt.lamda1,
-                           opt.lamda2, dl))
+                           opt.lamda2))
             torch.save(best_classifier.state_dict(),
                        opt.classifier_path)
 

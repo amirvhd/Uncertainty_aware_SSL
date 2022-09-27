@@ -59,10 +59,10 @@ def train(train_loader, model, criterion, optimizer, epoch, opt):
     return losses.avg, stdlosses.avg, stdlosses2.avg
 
 
-def set_model(model_name, temperature, syncBN=False, lamda1=1, lamda2=0.1, dl=False,
+def set_model(model_name, temperature, syncBN=False, lamda1=1, lamda2=0.1,
               batch_size=512, nh=5):
     model = conResNet(name=model_name, n_heads=nh)
-    criterion = UALoss(temperature=temperature, lamda1=lamda1, lamda2=lamda2, dl=dl, batch_size=batch_size)
+    criterion = UALoss(temperature=temperature, lamda1=lamda1, lamda2=lamda2, batch_size=batch_size)
 
     # enable synchronized Batch Normalization
 
