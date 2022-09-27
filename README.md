@@ -6,7 +6,8 @@
 
 # 
 
-This repository is for . It contains the example codes for different task descriptions. 
+This repository is for "UNCERTAINTY-AWARE SELF-SUPERVISED LEARNING
+WITH INDEPENDENT SUB-NETWORKS" paper. It contains the example codes for different task descriptions. 
 
 
 
