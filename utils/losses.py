@@ -6,11 +6,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class SupConLoss(nn.Module):
+class UALoss(nn.Module):
 
     def __init__(self, temperature=0.07, contrast_mode='all',
                  base_temperature=0.07, lamda1=1, lamda2=0.1, dl=False, batch_size=512):
-        super(SupConLoss, self).__init__()
+        super(UALoss, self).__init__()
         self.temperature = temperature
         self.contrast_mode = contrast_mode
         self.base_temperature = base_temperature

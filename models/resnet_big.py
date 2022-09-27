@@ -163,11 +163,11 @@ class LinearBatchNorm(nn.Module):
         return x
 
 
-class SupConResNet(nn.Module):
+class conResNet(nn.Module):
     """backbone + projection head"""
 
     def __init__(self, name='resnet50', head='mlp', feat_dim=128, n_heads=5):
-        super(SupConResNet, self).__init__()
+        super(conResNet, self).__init__()
 
         model_fun, dim_in = model_dict[name]
         self.total_var = 0

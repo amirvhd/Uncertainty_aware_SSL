@@ -2,7 +2,7 @@ import sys
 import time
 import torch
 from utils.util import AverageMeter, accuracy
-from models.resnet_big import SupConResNet, LinearClassifier
+from models.resnet_big import conResNet, LinearClassifier
 import torch.backends.cudnn as cudnn
 from torch import nn
 from sklearn.metrics import classification_report
@@ -17,7 +17,7 @@ class MyDataParallel(torch.nn.DataParallel):
 
 
 def set_model_linear(model_name, number_cls, path, nh=5):
-    model = SupConResNet(name=model_name, n_heads=nh)
+    model = conResNet(name=model_name, n_heads=nh)
     criterion = torch.nn.CrossEntropyLoss()
     classifier = LinearClassifier(name=model_name, num_classes=number_cls)
 

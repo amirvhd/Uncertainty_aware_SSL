@@ -3,8 +3,8 @@ import time
 import torch
 from utils.util import AverageMeter
 from utils.util import warmup_learning_rate
-from models.resnet_big import SupConResNet
-from utils.losses import SupConLoss
+from models.resnet_big import conResNet
+from utils.losses import UALoss
 import torch.backends.cudnn as cudnn
 from torch import nn
 
@@ -61,8 +61,8 @@ def train(train_loader, model, criterion, optimizer, epoch, opt):
 
 def set_model(model_name, temperature, syncBN=False, lamda1=1, lamda2=0.1, dl=False,
               batch_size=512, nh=5):
-    model = SupConResNet(name=model_name, n_heads=nh)
-    criterion = SupConLoss(temperature=temperature, lamda1=lamda1, lamda2=lamda2, dl=dl, batch_size=batch_size)
+    model = conResNet(name=model_name, n_heads=nh)
+    criterion = UALoss(temperature=temperature, lamda1=lamda1, lamda2=lamda2, dl=dl, batch_size=batch_size)
 
     # enable synchronized Batch Normalization
 

@@ -94,12 +94,7 @@ def run_experiment():
                 opt.num_workers if dev_run is False else 0,
                 dev_run,
             )
-        # linear_model_path = "./saved_models/{}_models_ensemble/linear_models/simclr800_linear_{}_epoch100_1heads_0.pt".format(
-        #     opt.dataset,
-        #     i)
-        # simclr_path = "./saved_models/{}_models_ensemble/linear_models/simclr800_encoder_{}_epoch100_1heads_0.pt".format(
-        #     opt.dataset,
-        #     i)
+
         linear_model_path = './saved_models/{}_experiments/linear_models/simclr800_linear_{}_epoch100_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
             opt.dataset,
             i,
