@@ -96,8 +96,6 @@ def train():
         n_cls = 10
     elif opt.dataset == "cifar100":
         n_cls = 100
-    elif opt.dataset == "cifar10h":
-        n_cls = 10
     elif opt.dataset == 'svhn':
         n_cls = 10
 
