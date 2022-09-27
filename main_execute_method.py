@@ -14,7 +14,7 @@ from Dataloader.label_un_data import download
 def parse_option():
     parser = argparse.ArgumentParser('argument for training')
     parser.add_argument('--dataset', type=str, default='cifar10',
-                        choices=['cifar10', 'cifar100', 'svhn', 'isic'], help='dataset')
+                        choices=['cifar10', 'cifar100'], help='dataset')
     parser.add_argument('--data_dir', type=str, default='.',
                         help='path to dataset')
     parser.add_argument('--model_dir', type=str, default='',
@@ -76,8 +76,6 @@ def run_experiment():
         n_cls = 100
     elif opt.dataset == 'svhn':
         n_cls = 10
-    elif opt.dataset == 'isic':
-        n_cls = 7
     # Execute method
     for i in range(opt.ensemble):
         print("ensmeble number is {}".format(i))
