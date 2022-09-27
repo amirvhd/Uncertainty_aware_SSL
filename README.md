@@ -45,24 +45,24 @@ pip install -r requirements.txt
 ### Pretraining
 
 ```python
-python main_pretrain.py --cosine
+python main_pretrain.py --cosine --nh 10 --dataset cifar10 --lamda1 1 --lamda2 0.08 --epoch 800
 ``` 
 ### Linear evaluation
 
 ```python
-python main_linear.py
+python main_linear.py --nh 10 --dataset cifar10 --lamda1 1 --lamda2 0.08
 ``` 
 
 ### Uncertainty evaluation 
 
 ```python
-python uncertainty_metric.py
+python uncertainty_metric.py --nh 10 --dataset cifar10 --lamda1 1 --lamda2 0.08
 ```
  
 ### Out of distribtuion detection
 
 ```python
-python main_execute_method.py
+python main_execute_method.py --nh 10 --dataset cifar10 --lamda1 1 --lamda2 0.08
 ```
  
 
@@ -70,7 +70,7 @@ python main_execute_method.py
 ## Acknowledgements
 Base Simclr adapted from following repository:
 
- - [Simclr](https://github.com/MaartenGr/BERTopic](https://github.com/HobbitLong/SupContrast))
+ - [Simclr](https://github.com/HobbitLong/SupContrast)
 
 Out of distribution code adapted from following repository:
 
@@ -81,10 +81,6 @@ Metrics for uncertainty analysis are taken from following repository:
  - [Uncertainty_metrics](https://github.com/bicycleman15/KD-calibration/blob/f436583f4458c89971414e972686c55596d5950d/calibration_library/metrics.py)
 
 
-
-## Feedback
-
-If you have any feedback, please reach out to us at A.vahidi@campus.lmu.de
 
 
 
