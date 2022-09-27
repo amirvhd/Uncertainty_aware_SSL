@@ -15,7 +15,6 @@ This repository is for . It contains the example codes for different task descri
 * [Installation](#Installation)
 * [Usage/Examples](#Usage/Examples)
 * [Acknowledgements](#Acknowledgements)
-* [Feedback](#Feedback)
 
 ## Badges
 
