@@ -169,7 +169,7 @@ def main():
         if opt.semi:
             opt.classifier_path = os.path.join(
                 opt.classifier_path,
-                './saved_models/{}_models_ensemble/semi_model/simclr_linear_{}_epoch{}_percent{}_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
+                './saved_models/{}_experiments/semi_model/simclr_linear_{}_epoch{}_percent{}_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
                            opt.dataset, i,
                            opt.epochs,
                            opt.semi_percent,
