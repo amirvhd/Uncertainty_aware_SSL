@@ -165,13 +165,30 @@ def main():
 
         writer.flush()
         writer.close()
-        # save the last model
+        # save the best model
         if opt.semi:
-
+            opt.classifier_path = os.path.join(
+                opt.classifier_path,
+                './saved_models/{}_models_ensemble/semi_model/simclr_linear_{}_epoch{}_percent{}_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
+                           opt.dataset, i,
+                           opt.epochs,
+                           opt.semi_percent,
+                           opt.nh,
+                           opt.lamda1,
+                           opt.lamda2, dl))
             torch.save(best_classifier.state_dict(),
                        opt.classifier_path)
 
         else:
+            opt.classifier_path = os.path.join(
+                opt.classifier_path,
+                './saved_models/{}_experiments/linear_models/simclr800_linear_{}_epoch{}_{}heads_lamda1{}_lamda2{}_{}_M5.pt'.format(
+                           opt.dataset,
+                           i,
+                           opt.epochs,
+                           opt.nh,
+                           opt.lamda1,
+                           opt.lamda2, dl))
             torch.save(best_classifier.state_dict(),
                        opt.classifier_path)
 
