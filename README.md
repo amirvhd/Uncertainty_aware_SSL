@@ -19,7 +19,6 @@ WITH INDEPENDENT SUB-NETWORKS" paper. It contains the example codes for differen
 
 ## Badges
 
-Add badges from somewhere like: [shields.io](https://shields.io/)
 
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs)
 [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
@@ -43,10 +42,14 @@ pip install -r requirements.txt
 
 ### Pretraining
 
+You need to specify the path for dataset and also saved_models for the following codes.  the You can run the pretraining of model for CIFAR-10 for UA-SSL with following code.
+
 ```python
 python main_pretrain.py --cosine --nh 10 --dataset cifar10 --lamda1 1 --lamda2 0.08 --epoch 800
 ``` 
 ### Linear evaluation
+
+You can run the linear-evaluation of the model for CIFAR-10 for UA-SSL with the following code. To get the results for semi-supervised, you need to use --semi and also specify what percccentage of data to be used for linear evaaluation for example --semi_percent 10 means it uses 10 percent of data for linear evaluation.
 
 ```python
 python main_linear.py --nh 10 --dataset cifar10 --lamda1 1 --lamda2 0.08
@@ -54,16 +57,20 @@ python main_linear.py --nh 10 --dataset cifar10 --lamda1 1 --lamda2 0.08
 
 ### Uncertainty evaluation 
 
+You can calculate different metrics (e.g. accuracy, NLL, ECE, OE, ...) for the model with the following code. You should specify paths for the pretrained and linear evaluation models.
+
 ```python
 python uncertainty_metric.py --nh 10 --dataset cifar10 --lamda1 1 --lamda2 0.08
 ```
  
 ### Out of distribtuion detection
 
+You can calculate results of out of distribution detection for CIFAR-10 with the followingg code. You should give the path for datasets and also paths for pretrained and linear evaluation models.
+
 ```python
 python main_execute_method.py --nh 10 --dataset cifar10 --lamda1 1 --lamda2 0.08
 ```
- 
+To get the results for covariant shift (corrupted datasets) you should add --c to the code.
 
 
 ## Acknowledgements
