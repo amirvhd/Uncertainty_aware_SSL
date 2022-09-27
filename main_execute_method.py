@@ -15,8 +15,12 @@ def parse_option():
     parser = argparse.ArgumentParser('argument for training')
     parser.add_argument('--dataset', type=str, default='cifar10',
                         choices=['cifar10', 'cifar100', 'svhn', 'isic'], help='dataset')
-    parser.add_argument('--data_dir', type=str, default='../../DATA2/',
+    parser.add_argument('--data_dir', type=str, default='.',
                         help='path to dataset')
+    parser.add_argument('--model_dir', type=str, default='',
+                        help='path to encoder')
+    parser.add_argument('--classifier_dir', type=str, default='',
+                        help='path to classifier')
     parser.add_argument('--batch_size', type=int, default=512,
                         help='batch_size')
     parser.add_argument('--num_workers', type=int, default=16,
@@ -95,18 +99,8 @@ def run_experiment():
                 dev_run,
             )
 
-        linear_model_path = './saved_models/{}_experiments/linear_models/simclr800_linear_{}_epoch100_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
-            opt.dataset,
-            i,
-            opt.nh,
-            opt.lamda1,
-            opt.lamda2, dl)
-        simclr_path = './saved_models/{}_experiments/linear_models/simclr800_encoder_{}_epoch100_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
-            opt.dataset,
-            i,
-            opt.nh,
-            opt.lamda1,
-            opt.lamda2, dl)
+        linear_model_path = opt.model_dir
+        simclr_path = opt.classifier_dir
         lit_model_h = LitBaseline(opt.dataset, linear_model_path, simclr_path, n_cls, out_dir, opt.nh)
         baseline_df = baseline_df.append(execute_baseline(opt, lit_model_h, trainer, loaders_dict))
     ens = baseline_df.groupby(['ood_name']).mean()

@@ -52,7 +52,7 @@ def parse_option():
     parser.add_argument('--data_folder', type=str, default=None, help='path to custom dataset')
     parser.add_argument('--size', type=int, default=32, help='parameter for RandomResizedCrop')
 
-    # temperature
+    # hyperparameters
     parser.add_argument('--temp', type=float, default=0.5,
                         help='temperature for loss function')
     parser.add_argument('--nh', type=int, default=1,
@@ -68,21 +68,17 @@ def parse_option():
                         help='using cosine annealing')
     parser.add_argument('--warm', action='store_true',
                         help='warm-up for large batch training')
-
+    parser.add_argument('--saved_model', type=str, default='.',
+                        help='path to save classifier')
+    parser.add_argument('--log', type=str, default='.',
+                        help='path to save tensorboard logs')
     opt = parser.parse_args()
-
-    # check if dataset is path that passed required arguments
-    if opt.dataset == 'path':
-        assert opt.data_folder is not None \
-               and opt.mean is not None \
-               and opt.std is not None
 
     # set the path according to the environment
     if opt.data_folder is None:
-        opt.data_folder = '../../DATA2/'
-    opt.model_path = './saved_models/{}_experiments'.format(opt.dataset)
-    opt.tb_path = '../../DATA2/loggings_{}_models_UAloss_{}'.format(opt.dataset, opt.nh)
-    opt.save_folder = opt.model_path
+        opt.data_folder = './DATA'
+    opt.tb_path = os.path.join(opt.log, '/{}/'.format(opt.dataset))
+    opt.save_folder = os.path.join(opt.saved_model, '/{}_experiments'.format(opt.dataset))
     if not os.path.isdir(opt.save_folder):
         os.makedirs(opt.save_folder)
     if opt.batch_size > 256:

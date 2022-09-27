@@ -12,13 +12,12 @@ from utils.util import set_optimizer
 
 from Train.linear_eval import set_model_linear, train, evaluate, validate
 from torch.utils.tensorboard import SummaryWriter
+
 try:
     import apex
     from apex import amp, optimizers
 except ImportError:
     pass
-
-
 
 
 def parse_option():
@@ -49,6 +48,8 @@ def parse_option():
     parser.add_argument('--model', type=str, default='resnet50')
     parser.add_argument('--dataset', type=str, default='cifar10',
                         choices=['cifar10', 'cifar100', 'svhn', 'isic'], help='dataset')
+    parser.add_argument('--data_folder', type=str, default='.',
+                        help='path to dataset')
 
     # other setting
     parser.add_argument('--cosine', action='store_true',
@@ -58,6 +59,10 @@ def parse_option():
 
     parser.add_argument('--ckpt', type=str, default='./saved_models/cifar10_models/simclr_cifar10_0_epoch200.pt',
                         help='path to pre-trained model')
+    parser.add_argument('--classifier_path', type=str, default='.',
+                        help='path to save classifier')
+    parser.add_argument('--log', type=str, default='.',
+                        help='path to save tensorboard logs')
     parser.add_argument('--semi', action='store_true',
                         help='semi-supervised')
     parser.add_argument('--semi_percent', type=int, default=10,
@@ -74,14 +79,11 @@ def parse_option():
                         help='using cosine annealing')
     opt = parser.parse_args()
 
-    # set the path according to the environment
-    opt.data_folder = '../../DATA2/'
-
     iterations = opt.lr_decay_epochs.split(',')
     opt.lr_decay_epochs = list([])
     for it in iterations:
         opt.lr_decay_epochs.append(int(it))
-    opt.tb_path = '../../DATA/loggings_{}_models_UAloss/linear_evaluation/'.format(opt.dataset)
+    opt.tb_path = os.path.join(opt.log, '/{}/linear_evaluation/'.format(opt.dataset))
 
     # warm-up for large-batch training,
     if opt.warm:
@@ -99,18 +101,14 @@ def parse_option():
         opt.n_cls = 100
     elif opt.dataset == 'svhn':
         opt.n_cls = 10
-    elif opt.dataset == 'isic':
-        opt.n_cls = 7
     else:
         raise ValueError('dataset not supported: {}'.format(opt.dataset))
     if opt.semi:
-        opt.model_path = './saved_models/{}_models_ensemble/semi_model/'.format(opt.dataset)
+        opt.classifier_path = os.path.join(opt.classifier_path, './{}/semi_model/'.format(opt.dataset))
     else:
-        opt.model_path = './saved_models/{}_experiments/linear_models'.format(opt.dataset)
+        opt.classifier_path = os.path.join(opt.classifier_path, './{}_experiments/linear_models'.format(opt.dataset))
     if not os.path.isdir(opt.model_path):
         os.makedirs(opt.model_path)
-
-    opt.classifier_path = './saved_models/{}_linear_models'.format(opt.dataset)
     return opt
 
 
@@ -130,22 +128,9 @@ def main():
         best_epoch = 0
         torch.manual_seed(i)
         torch.cuda.manual_seed(i)
-        opt.ckpt = (
-            './saved_models/{}_experiments/simclr_{}_{}_epoch800_{}heads_lamda1{}_lamda2{}_{}.pt'.format(opt.dataset,
-                                                                                                           opt.dataset,
-                                                                                                           i,
-                                                                                                           opt.nh,
-                                                                                                           opt.lamda1,
-                                                                                                           opt.lamda2,
-                                                                                                           dl))
-        # opt.ckpt = "./saved_models/{}_models_ensemble/linear_models/simclr800_encoder_{}_epoch100_1heads_0.pt".format(
-        #     opt.dataset,
-        #     i)
-        # build model and criterion
         model, classifier, criterion = set_model_linear(model_name=opt.model, number_cls=opt.n_cls, path=opt.ckpt,
                                                         nh=opt.nh)
-        # tensorboard
-        # logger = tb_logger.Logger(logdir=opt.tb_path, flush_secs=2)
+
         # build optimizer
         optimizer = set_optimizer(opt, classifier)
         print('ensemble number is {}:'.format(i))
@@ -184,38 +169,11 @@ def main():
         if opt.semi:
 
             torch.save(best_classifier.state_dict(),
-                       './saved_models/{}_models_ensemble/semi_model/simclr_linear_{}_epoch{}_percent{}_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
-                           opt.dataset, i,
-                           opt.epochs,
-                           opt.semi_percent,
-                           opt.nh,
-                           opt.lamda1,
-                           opt.lamda2, dl))
-            torch.save(model.state_dict(),
-                       './saved_models/{}_models_ensemble/semi_model/simclr_encoder_{}_epoch{}_percent{}_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
-                           opt.dataset, i,
-                           opt.epochs,
-                           opt.semi_percent,
-                           opt.nh,
-                           opt.lamda1,
-                           opt.lamda2, dl))
+                       opt.classifier_path)
+
         else:
             torch.save(best_classifier.state_dict(),
-                       './saved_models/{}_experiments/linear_models/simclr800_linear_{}_epoch{}_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
-                           opt.dataset,
-                           i,
-                           opt.epochs,
-                           opt.nh,
-                           opt.lamda1,
-                           opt.lamda2, dl))
-            torch.save(model.state_dict(),
-                       './saved_models/{}_experiments/linear_models/simclr800_encoder_{}_epoch{}_{}heads_lamda1{}_lamda2{}_{}.pt'.format(
-                           opt.dataset,
-                           i,
-                           opt.epochs,
-                           opt.nh,
-                           opt.lamda1,
-                           opt.lamda2, dl))
+                       opt.classifier_path)
 
 
 if __name__ == '__main__':
