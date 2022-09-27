@@ -1,7 +1,4 @@
-"""
-Author: Yonglong Tian (yonglong@mit.edu)
-Date: May 07, 2020
-"""
+
 from __future__ import print_function
 
 import torch
@@ -10,8 +7,6 @@ import torch.nn.functional as F
 
 
 class SupConLoss(nn.Module):
-    """Supervised Contrastive Learning: https://arxiv.org/pdf/2004.11362.pdf.
-    It also supports the unsupervised contrastive loss in SimCLR"""
 
     def __init__(self, temperature=0.07, contrast_mode='all',
                  base_temperature=0.07, lamda1=1, lamda2=0.1, dl=False, batch_size=512):
@@ -25,9 +20,7 @@ class SupConLoss(nn.Module):
         self.batch_size = batch_size
 
     def forward(self, features, features_std, epochs):
-        """Compute loss for model. If both `labels` and `mask` are None,
-        it degenerates to SimCLR unsupervised loss:
-        https://arxiv.org/pdf/2002.05709.pdf
+        """
 
         Args:
             features: hidden vector of shape [bsz, n_views, ...].
