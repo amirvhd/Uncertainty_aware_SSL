@@ -13,7 +13,6 @@ This repository is for . It contains the example codes for different task descri
 ## Table of contents
 * [Badges](#general-information)
 * [Installation](#Installation)
-* [Datasets](#Datasets)
 * [Usage/Examples](#Usage/Examples)
 * [Acknowledgements](#Acknowledgements)
 * [Feedback](#Feedback)
