@@ -1,4 +1,3 @@
-![Logo](https://user-images.githubusercontent.com/65691404/192393358-8170f550-638f-4fbd-933e-e538cc9fdb7a.png)
 
 
 
@@ -6,8 +5,8 @@
 
 # 
 
-This repository is for "Uncertainty-Aware Self-Supervised Learning via
-Diversified Ensemble of Independent Sub-Networks" paper. It contains the example codes for different task descriptions. 
+This repository is for "Diversified Ensemble of Independent Sub-Networks for
+Robust Self-Supervised Representation Learning" paper. It contains the example codes for different task descriptions. 
 
 
 
